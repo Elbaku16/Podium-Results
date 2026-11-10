@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @Environment(AuthViewModel.self) private var auth
     let onContinue: () -> Void
     var initialMode: Mode = .signIn
 
@@ -12,7 +13,7 @@ struct LoginView: View {
     @State private var confirmPassword = ""
     @State private var isPasswordVisible = false
     @State private var didAttemptSubmit = false
-    @State private var isShowingGuestNotice = false
+    @State private var errorText: String?
 
     enum Mode: String, CaseIterable { case signIn = "Sign In", createAccount = "Create Account" }
 
@@ -35,7 +36,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.podiumCream.ignoresSafeArea()
+                Color.podiumCharcoal.ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -53,6 +54,7 @@ struct LoginView: View {
                             ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                         }
                         .pickerStyle(.segmented)
+                        .environment(\.colorScheme, .dark)
 
                         VStack(spacing: 14) {
                             if mode == .createAccount {
@@ -70,16 +72,33 @@ struct LoginView: View {
                                               errorMessage: "Passwords don't match.")
                             }
                         }
-                        .cardBackground()
+                        .cardBackground(Color.white.opacity(0.06))
 
                         Button {
                             didAttemptSubmit = true
-                            if canSubmit { isShowingGuestNotice = true }
+                            guard canSubmit else { return }
+                            Task {
+                                let succeeded: Bool
+                                switch mode {
+                                case .signIn:
+                                    succeeded = await auth.signIn(email: email, password: password)
+                                case .createAccount:
+                                    succeeded = await auth.signUp(name: name.trimmingCharacters(in: .whitespaces),
+                                                                  email: email, password: password)
+                                }
+                                if succeeded {
+                                    dismiss()
+                                    onContinue()
+                                } else {
+                                    errorText = auth.errorMessage
+                                }
+                            }
                         } label: {
-                            Text(mode == .signIn ? "Sign In" : "Create Account")
+                            Text(auth.isLoading ? "Please wait..." : (mode == .signIn ? "Sign In" : "Create Account"))
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(PillButtonStyle())
+                        .disabled(auth.isLoading)
 
                         if mode == .signIn {
                             Button("Forgot your password?") {}
@@ -92,18 +111,18 @@ struct LoginView: View {
             }
             .navigationTitle(mode == .signIn ? "Sign In" : "Create Account")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.podiumCharcoal, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .alert("Accounts Coming Soon", isPresented: $isShowingGuestNotice) {
-                Button("Continue as Guest") {
-                    dismiss()
-                    onContinue()
-                }
+            .alert("Couldn't continue", isPresented: Binding(get: { errorText != nil }, set: { if !$0 { errorText = nil } })) {
+                Button("OK", role: .cancel) {}
             } message: {
-                Text("Podium Results doesn't have real accounts yet — your info checks out, but there's nothing to authenticate against. You can keep using the app as a guest for now.")
+                Text(errorText ?? "")
             }
         }
         .tint(.podiumCopper)
@@ -115,9 +134,10 @@ struct LoginView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased())
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            TextField(label, text: text)
+                .foregroundStyle(Color.podiumMuted)
+            TextField(label, text: text, prompt: Text(label).foregroundStyle(Color.podiumMuted))
                 .textFieldStyle(.plain)
+                .foregroundStyle(.white)
                 .keyboardType(keyboard)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
@@ -126,7 +146,7 @@ struct LoginView: View {
                     .font(.caption2)
                     .foregroundStyle(.red)
             }
-            Divider()
+            Divider().overlay(.white.opacity(0.07))
         }
     }
 
@@ -134,15 +154,16 @@ struct LoginView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased())
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.podiumMuted)
             HStack {
                 Group {
                     if isPasswordVisible {
-                        TextField(label, text: text)
+                        TextField(label, text: text, prompt: Text(label).foregroundStyle(Color.podiumMuted))
                     } else {
-                        SecureField(label, text: text)
+                        SecureField(label, text: text, prompt: Text(label).foregroundStyle(Color.podiumMuted))
                     }
                 }
+                .foregroundStyle(.white)
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
@@ -151,7 +172,7 @@ struct LoginView: View {
                     isPasswordVisible.toggle()
                 } label: {
                     Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.podiumMuted)
                 }
             }
             if didAttemptSubmit && !isValid {
@@ -159,12 +180,13 @@ struct LoginView: View {
                     .font(.caption2)
                     .foregroundStyle(.red)
             }
-            Divider()
+            Divider().overlay(.white.opacity(0.07))
         }
     }
 }
 
 #Preview {
     LoginView(onContinue: {})
+        .environment(AuthViewModel())
 }
 

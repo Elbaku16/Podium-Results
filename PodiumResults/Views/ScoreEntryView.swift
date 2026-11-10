@@ -24,10 +24,13 @@ struct ScoreEntryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.podiumCream.ignoresSafeArea()
+                Color.podiumCharcoal.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Round \(match.round)".uppercased())
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.podiumMuted)
                         outcomePicker(options: [
                             (player1Name, 1, 0),
                             ("Draw", 0.5, 0.5),
@@ -39,6 +42,9 @@ struct ScoreEntryView: View {
             }
             .navigationTitle(match.isComplete ? "Correct Result" : "Result")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.podiumCharcoal, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -73,11 +79,10 @@ struct ScoreEntryView: View {
                             Image(systemName: "checkmark.circle.fill")
                         }
                     }
-                    .foregroundStyle(isSelected ? .white : Color.podiumEspresso)
+                    .foregroundStyle(.white)
                     .padding(16)
-                    .background(isSelected ? Color.podiumCopper : .white)
+                    .background(isSelected ? Color.podiumCopper : Color.white.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .shadow(color: Color.podiumEspresso.opacity(isSelected ? 0 : 0.08), radius: 6, y: 3)
                 }
             }
         }

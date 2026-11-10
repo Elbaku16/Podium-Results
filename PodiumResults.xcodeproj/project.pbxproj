@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9775932E309C143A005F1AFB /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9775932D309C143A005F1AFB /* FirebaseAuth */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		3D7F47D8D4A347B28859F2A8 /* PodiumResults.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PodiumResults.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9775932E309C143A005F1AFB /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = PodiumResults;
 			packageProductDependencies = (
+				9775932D309C143A005F1AFB /* FirebaseAuth */,
 			);
 			productName = PodiumResults;
 			productReference = 3D7F47D8D4A347B28859F2A8 /* PodiumResults.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = EF1FBD3AFDC44AE1A931E16A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9775932C309C143A005F1AFB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 79A4561876BE76AE813624D3 /* Products */;
 			projectDirPath = "";
@@ -334,6 +343,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9775932C309C143A005F1AFB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9775932D309C143A005F1AFB /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9775932C309C143A005F1AFB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9EF6700BF543AE796985DE2B /* Project object */;
 }

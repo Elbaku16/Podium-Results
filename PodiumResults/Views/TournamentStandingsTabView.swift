@@ -14,11 +14,11 @@ struct TournamentStandingsTabView: View {
                 }
                 .buttonStyle(.plain)
                 if standing.id != standings.last?.id {
-                    Divider().overlay(Color.podiumEspresso.opacity(0.1))
+                    Divider().overlay(.white.opacity(0.07))
                 }
             }
         }
-        .background(Color.podiumCream)
+        .background(Color.white.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
@@ -30,23 +30,23 @@ struct TournamentStandingsTabView: View {
                     .frame(width: 20)
             } else {
                 Text("\(index + 1)")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.podiumMuted)
                     .frame(width: 20)
             }
             PlayerAvatar(name: standing.player.name, size: 28)
             VStack(alignment: .leading, spacing: 1) {
                 Text(standing.player.name)
-                    .foregroundStyle(Color.podiumEspresso)
+                    .foregroundStyle(.white)
                     .lineLimit(1)
                 Text("SB \(standing.sonnebornBerger.scoreText) · Koya \(standing.koya.scoreText) · \(standing.wins)W")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.podiumMuted)
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
             Text(standing.score.scoreText)
                 .fontWeight(.semibold)
-                .foregroundStyle(medalColor(for: index) ?? Color.podiumEspresso)
+                .foregroundStyle(medalColor(for: index) ?? .white)
         }
         .padding(14)
     }

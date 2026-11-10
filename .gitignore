@@ -6,3 +6,6 @@ DerivedData/
 *.moved-aside
 *.xccheckout
 *.xcscmblueprint
+
+# Firebase
+GoogleService-Info.plist

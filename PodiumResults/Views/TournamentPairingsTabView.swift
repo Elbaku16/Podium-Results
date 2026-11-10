@@ -67,11 +67,11 @@ struct TournamentPairingsTabView: View {
             ForEach(Array(roundMatches.enumerated()), id: \.element.id) { index, match in
                 matchRow(match, table: index + 1)
                 if match.id != roundMatches.last?.id {
-                    Divider().overlay(Color.podiumEspresso.opacity(0.1))
+                    Divider().overlay(.white.opacity(0.07))
                 }
             }
         }
-        .background(Color.podiumCream)
+        .background(Color.white.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
@@ -85,18 +85,18 @@ struct TournamentPairingsTabView: View {
                 HStack(spacing: 8) {
                     Text("\(table)")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.podiumMuted)
                         .frame(width: 44, alignment: .leading)
 
                     Text(name1)
                         .font(.subheadline)
-                        .foregroundStyle(Color.podiumEspresso)
+                        .foregroundStyle(.white)
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text(player2.name)
                         .font(.subheadline)
-                        .foregroundStyle(Color.podiumEspresso)
+                        .foregroundStyle(.white)
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -106,7 +106,7 @@ struct TournamentPairingsTabView: View {
                                 .foregroundStyle(Color.podiumCopper)
                         } else {
                             Text("vs")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.podiumMuted)
                         }
                     }
                     .font(.subheadline.weight(.semibold))
@@ -119,16 +119,16 @@ struct TournamentPairingsTabView: View {
             HStack(spacing: 8) {
                 Text("\(table)")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.podiumMuted)
                     .frame(width: 44, alignment: .leading)
                 Text(name1)
                     .font(.subheadline)
-                    .foregroundStyle(Color.podiumEspresso)
+                    .foregroundStyle(.white)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text("BYE")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.podiumMuted)
                     .frame(width: 56 + 56, alignment: .trailing)
             }
             .padding(14)

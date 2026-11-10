@@ -16,9 +16,18 @@ private struct PlayerSummary: Identifiable {
     }
 }
 
+private enum PlayerSort: String, CaseIterable, Identifiable {
+    case wins = "Most wins"
+    case name = "Name"
+    case tournaments = "Most tournaments"
+
+    var id: String { rawValue }
+}
+
 struct PlayersDirectoryView: View {
     @Query private var tournaments: [Tournament]
     @State private var searchText = ""
+    @State private var sortOption: PlayerSort = .wins
     @State private var selectedSummary: PlayerSummary?
 
     private var summaries: [PlayerSummary] {
@@ -42,11 +51,21 @@ struct PlayersDirectoryView: View {
             }
             return PlayerSummary(name: name, tournamentNames: entries.map { $0.tournament.name }, wins: wins, completedMatches: completed)
         }
-        .sorted { $0.wins != $1.wins ? $0.wins > $1.wins : $0.name < $1.name }
     }
 
     private var filtered: [PlayerSummary] {
-        summaries.filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+        let matches = summaries.filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+        switch sortOption {
+        case .wins:
+            return matches.sorted { $0.wins != $1.wins ? $0.wins > $1.wins : $0.name < $1.name }
+        case .name:
+            return matches.sorted { $0.name < $1.name }
+        case .tournaments:
+            return matches.sorted {
+                $0.tournamentNames.count != $1.tournamentNames.count
+                    ? $0.tournamentNames.count > $1.tournamentNames.count : $0.name < $1.name
+            }
+        }
     }
 
     var body: some View {
@@ -56,12 +75,20 @@ struct PlayersDirectoryView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        Text("Players")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                            .padding(.top, 8)
+                        HStack {
+                            Text("Players")
+                                .font(.system(size: 30, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            Spacer()
+                            sortMenu
+                        }
+                        .padding(.top, 8)
 
                         searchField
+
+                        Text("\(filtered.count) player\(filtered.count == 1 ? "" : "s")")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.podiumMuted)
 
                         if filtered.isEmpty {
                             emptyState.padding(.top, 40).frame(maxWidth: .infinity)
@@ -73,11 +100,11 @@ struct PlayersDirectoryView: View {
                                     }
                                     .buttonStyle(.plain)
                                     if index != filtered.count - 1 {
-                                        Divider().overlay(Color.podiumEspresso.opacity(0.1))
+                                        Divider().overlay(.white.opacity(0.07))
                                     }
                                 }
                             }
-                            .background(Color.podiumCream)
+                            .background(Color.white.opacity(0.06))
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
                     }
@@ -92,18 +119,33 @@ struct PlayersDirectoryView: View {
         }
     }
 
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort by", selection: $sortOption) {
+                ForEach(PlayerSort.allCases) { Text($0.rawValue).tag($0) }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+                .frame(width: 34, height: 34)
+                .background(Color.white.opacity(0.08))
+                .clipShape(Circle())
+        }
+    }
+
     private var searchField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(Color.podiumEspresso.opacity(0.5))
-            TextField("Search players...", text: $searchText)
+                .foregroundStyle(Color.podiumMuted)
+            TextField("Search players...", text: $searchText, prompt: Text("Search players...").foregroundStyle(Color.podiumMuted))
                 .font(.subheadline)
-                .foregroundStyle(Color.podiumEspresso)
+                .foregroundStyle(.white)
                 .autocorrectionDisabled()
         }
         .padding(.vertical, 11)
         .padding(.horizontal, 14)
-        .background(Color.podiumCream)
+        .background(Color.white.opacity(0.06))
         .clipShape(Capsule())
     }
 
@@ -116,22 +158,22 @@ struct PlayersDirectoryView: View {
             } else {
                 Text("\(rank + 1)")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.podiumMuted)
                     .frame(width: 22)
             }
             PlayerAvatar(name: summary.name, size: 38)
             VStack(alignment: .leading, spacing: 3) {
                 Text(summary.name)
                     .font(.headline)
-                    .foregroundStyle(Color.podiumEspresso)
-                Text("\(summary.tournamentNames.count) tournament\(summary.tournamentNames.count == 1 ? "" : "s") · \(summary.wins) wins")
+                    .foregroundStyle(.white)
+                Text("\(summary.tournamentNames.count) tournament\(summary.tournamentNames.count == 1 ? "" : "s") · \(summary.wins) win\(summary.wins == 1 ? "" : "s")")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.podiumMuted)
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(Color.podiumEspresso.opacity(0.3))
+                .foregroundStyle(Color.podiumMuted.opacity(0.5))
         }
         .padding(14)
     }

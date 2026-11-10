@@ -25,6 +25,7 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environment(AuthViewModel())
         .modelContainer(for: [Tournament.self, Player.self, Match.self], inMemory: true)
 }
 

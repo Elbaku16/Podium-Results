@@ -2,6 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct ProfileView: View {
+    @Environment(AuthViewModel.self) private var auth
+    @Environment(\.dismiss) private var dismiss
     @Query private var tournaments: [Tournament]
     @State private var isShowingAbout = false
     @State private var comingSoonMessage: String?
@@ -69,10 +71,10 @@ struct ProfileView: View {
                     .foregroundStyle(Color.podiumCopper)
             }
             VStack(spacing: 2) {
-                Text("Guest Organizer")
+                Text(auth.user?.name ?? "Guest Organizer")
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.white)
-                Text("Sign in coming soon")
+                Text(auth.user?.email ?? "Not signed in")
                     .font(.caption)
                     .foregroundStyle(Color.podiumMuted)
             }
@@ -177,9 +179,10 @@ struct ProfileView: View {
 
     private var signOutButton: some View {
         Button {
-            comingSoonMessage = "You're browsing as a guest, there's no account to sign out of yet."
+            auth.signOut()
+            dismiss()
         } label: {
-            Text("Sign Out")
+            Text(auth.isLoggedIn ? "Sign Out" : "Back to Login")
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
@@ -225,6 +228,7 @@ struct ProfileView: View {
 
 #Preview {
     ProfileView()
+        .environment(AuthViewModel())
         .modelContainer(for: [Tournament.self, Player.self, Match.self], inMemory: true)
 }
 

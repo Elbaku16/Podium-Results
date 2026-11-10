@@ -7,12 +7,7 @@ struct ContentView: View {
     @State private var isShowingNotifications = false
     @State private var searchText = ""
     @State private var selectedFilter: TournamentStatus?
-
-    private var filteredTournaments: [Tournament] {
-        tournaments
-            .filter { selectedFilter == nil || $0.status == selectedFilter }
-            .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
+    @State private var sortOption: TournamentSort = .newest
 
     var body: some View {
         NavigationStack {
@@ -30,21 +25,7 @@ struct ContentView: View {
                                 .frame(maxWidth: .infinity)
                         } else {
                             filterPills
-                            if filteredTournaments.isEmpty {
-                                noResultsState.padding(.top, 30).frame(maxWidth: .infinity)
-                            } else {
-                                VStack(spacing: 0) {
-                                    ForEach(Array(filteredTournaments.enumerated()), id: \.element.id) { index, tournament in
-                                        NavigationLink(value: tournament) {
-                                            TournamentRow(tournament: tournament)
-                                        }
-                                        .buttonStyle(.plain)
-                                        if index != filteredTournaments.count - 1 {
-                                            Divider().overlay(.white.opacity(0.07))
-                                        }
-                                    }
-                                }
-                            }
+                            TournamentResultsView(searchText: searchText, sortOption: sortOption, statusFilter: selectedFilter)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -101,7 +82,7 @@ struct ContentView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Color.podiumMuted)
-            TextField("Search tournaments...", text: $searchText)
+            TextField("Search tournaments...", text: $searchText, prompt: Text("Search tournaments...").foregroundStyle(Color.podiumMuted))
                 .font(.subheadline)
                 .foregroundStyle(.white)
                 .tint(.white)
@@ -114,15 +95,33 @@ struct ContentView: View {
     }
 
     private var filterPills: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                filterPill(title: "All", isSelected: selectedFilter == nil) { selectedFilter = nil }
-                ForEach(TournamentStatus.allCases, id: \.self) { status in
-                    filterPill(title: status.rawValue, isSelected: selectedFilter == status) {
-                        selectedFilter = status
+        HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    filterPill(title: "All", isSelected: selectedFilter == nil) { selectedFilter = nil }
+                    ForEach(TournamentStatus.allCases, id: \.self) { status in
+                        filterPill(title: status.rawValue, isSelected: selectedFilter == status) {
+                            selectedFilter = status
+                        }
                     }
                 }
             }
+            sortMenu
+        }
+    }
+
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort by", selection: $sortOption) {
+                ForEach(TournamentSort.allCases) { Text($0.rawValue).tag($0) }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+                .frame(width: 34, height: 34)
+                .background(Color.white.opacity(0.08))
+                .clipShape(Circle())
         }
     }
 
@@ -156,17 +155,6 @@ struct ContentView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var noResultsState: some View {
-        VStack(spacing: 6) {
-            Text("No matches")
-                .font(.headline)
-                .foregroundStyle(.white)
-            Text("Try a different search or filter.")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.5))
-        }
-        .frame(maxWidth: .infinity)
-    }
 }
 
 #Preview {

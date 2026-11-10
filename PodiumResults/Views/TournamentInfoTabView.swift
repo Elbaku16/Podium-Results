@@ -6,6 +6,7 @@ struct TournamentInfoTabView: View {
     let currentRound: Int
     let onGenerateSchedule: () -> Void
     let onViewPairings: () -> Void
+    let onAddPlayer: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -14,6 +15,16 @@ struct TournamentInfoTabView: View {
             }
             infoCard
             actionButton
+            if tournament.status != .finished {
+                Button(action: onAddPlayer) {
+                    Label("Add Player", systemImage: "person.badge.plus")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .foregroundStyle(Color.podiumCopper)
+                .overlay(Capsule().stroke(Color.podiumCopper.opacity(0.6), lineWidth: 1))
+            }
         }
     }
 
@@ -26,7 +37,7 @@ struct TournamentInfoTabView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Round \(currentRound)")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.podiumEspresso)
+                    .foregroundStyle(.white)
                 Text("In progress")
                     .font(.caption)
                     .foregroundStyle(Color.podiumCopper)
@@ -34,29 +45,29 @@ struct TournamentInfoTabView: View {
             Spacer()
         }
         .padding(14)
-        .background(Color.podiumCream)
+        .background(Color.white.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var infoCard: some View {
         VStack(spacing: 0) {
             infoRow(icon: "square.grid.3x3.fill", label: "Format", value: tournament.format)
-            Divider().overlay(Color.podiumEspresso.opacity(0.1))
+            Divider().overlay(.white.opacity(0.07))
             infoRow(icon: "number", label: "Rounds", value: "\(max(rounds.count, 1))")
             if !tournament.timeControl.isEmpty {
-                Divider().overlay(Color.podiumEspresso.opacity(0.1))
+                Divider().overlay(.white.opacity(0.07))
                 infoRow(icon: "clock.fill", label: "Time Control", value: tournament.timeControl)
             }
             if !tournament.categories.isEmpty {
-                Divider().overlay(Color.podiumEspresso.opacity(0.1))
+                Divider().overlay(.white.opacity(0.07))
                 infoRow(icon: "person.3.fill", label: "Categories", value: tournament.categories)
             }
             if !tournament.arbiter.isEmpty {
-                Divider().overlay(Color.podiumEspresso.opacity(0.1))
+                Divider().overlay(.white.opacity(0.07))
                 infoRow(icon: "person.fill.checkmark", label: "Arbiter", value: tournament.arbiter)
             }
         }
-        .background(Color.podiumCream)
+        .background(Color.white.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
@@ -96,10 +107,10 @@ struct TournamentInfoTabView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.podiumMuted)
                 Text(value)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.podiumEspresso)
+                    .foregroundStyle(.white)
             }
             Spacer()
         }

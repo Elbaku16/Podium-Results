@@ -8,6 +8,7 @@ struct TournamentDetailView: View {
     @State private var selectedPlayer: Player?
     @State private var selectedRound: Int?
     @State private var showConfetti = false
+    @State private var isShowingAddPlayer = false
     @State private var selectedTab: DetailTab
 
     enum DetailTab: String, CaseIterable {
@@ -67,7 +68,8 @@ struct TournamentDetailView: View {
                                 rounds: rounds,
                                 currentRound: currentRound,
                                 onGenerateSchedule: { viewModel.generateSchedule(for: tournament) },
-                                onViewPairings: { selectedTab = .pairings }
+                                onViewPairings: { selectedTab = .pairings },
+                                onAddPlayer: { isShowingAddPlayer = true }
                             )
                         case .pairings:
                             TournamentPairingsTabView(
@@ -99,6 +101,14 @@ struct TournamentDetailView: View {
                 viewModel.recordResult(for: match, score1: score1, score2: score2)
                 showConfetti = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { showConfetti = false }
+            }
+        }
+        .sheet(isPresented: $isShowingAddPlayer) {
+            AddPlayerView(
+                existingNames: tournament.players.map(\.name),
+                hasSchedule: !tournament.matches.isEmpty
+            ) { name in
+                viewModel.addPlayer(named: name, to: tournament)
             }
         }
         .sheet(item: $selectedPlayer) { player in

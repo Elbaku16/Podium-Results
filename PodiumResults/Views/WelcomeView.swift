@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct WelcomeView: View {
+    @Environment(AuthViewModel.self) private var auth
     @State private var isShowingApp = false
     @State private var isShowingSignUp = false
     @State private var email = ""
@@ -9,6 +10,7 @@ struct WelcomeView: View {
     @State private var isPasswordVisible = false
     @State private var didAttemptSubmit = false
     @State private var isShowingGuestNotice = false
+    @State private var errorText: String?
 
     private var isEmailValid: Bool {
         email.range(of: #"^\S+@\S+\.\S+$"#, options: .regularExpression) != nil
@@ -62,9 +64,16 @@ struct WelcomeView: View {
 
                     Button {
                         didAttemptSubmit = true
-                        if canSubmit { isShowingGuestNotice = true }
+                        guard canSubmit else { return }
+                        Task {
+                            if await auth.signIn(email: email, password: password) {
+                                isShowingApp = true
+                            } else {
+                                errorText = auth.errorMessage
+                            }
+                        }
                     } label: {
-                        Text("Log In")
+                        Text(auth.isLoading ? "Logging in..." : "Log In")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -72,6 +81,7 @@ struct WelcomeView: View {
                     .foregroundStyle(.white)
                     .background(Color.podiumCopper)
                     .clipShape(Capsule())
+                    .disabled(auth.isLoading)
 
                     Button {
                         isShowingApp = true
@@ -101,10 +111,18 @@ struct WelcomeView: View {
         .sheet(isPresented: $isShowingSignUp) {
             LoginView(onContinue: { isShowingApp = true }, initialMode: .createAccount)
         }
-        .alert("Accounts Coming Soon", isPresented: $isShowingGuestNotice) {
-            Button("Continue as Guest") { isShowingApp = true }
+        .alert("Coming Soon", isPresented: $isShowingGuestNotice) {
+            Button("OK", role: .cancel) {}
         } message: {
-            Text("Podium Results doesn't have real accounts yet — your info checks out, but there's nothing to authenticate against. You can keep using the app as a guest for now.")
+            Text("Apple and Google sign in are coming soon. For now you can use your email.")
+        }
+        .alert("Couldn't log in", isPresented: Binding(get: { errorText != nil }, set: { if !$0 { errorText = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorText ?? "")
+        }
+        .onAppear {
+            if auth.isLoggedIn { isShowingApp = true }
         }
     }
 
@@ -127,7 +145,7 @@ struct WelcomeView: View {
 
     private func pillField(placeholder: String, text: Binding<String>, isValid: Bool, keyboard: UIKeyboardType) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            TextField(placeholder, text: text)
+            TextField(placeholder, text: text, prompt: Text(placeholder).foregroundStyle(.white.opacity(0.5)))
                 .foregroundStyle(.white)
                 .tint(.white)
                 .keyboardType(keyboard)
@@ -151,9 +169,9 @@ struct WelcomeView: View {
             HStack {
                 Group {
                     if isPasswordVisible {
-                        TextField("Password", text: $password)
+                        TextField("Password", text: $password, prompt: Text("Password").foregroundStyle(.white.opacity(0.5)))
                     } else {
-                        SecureField("Password", text: $password)
+                        SecureField("Password", text: $password, prompt: Text("Password").foregroundStyle(.white.opacity(0.5)))
                     }
                 }
                 .foregroundStyle(.white)
@@ -203,6 +221,7 @@ struct WelcomeView: View {
 
 #Preview {
     WelcomeView()
+        .environment(AuthViewModel())
         .modelContainer(for: [Tournament.self, Player.self, Match.self], inMemory: true)
 }
 

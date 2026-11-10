@@ -28,6 +28,28 @@ struct TournamentDetailViewModel {
         }
     }
 
+    @discardableResult
+    func addPlayer(named name: String, to tournament: Tournament) -> Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let isDuplicate = tournament.players.contains { $0.name.lowercased() == trimmed.lowercased() }
+        guard !trimmed.isEmpty, !isDuplicate, tournament.status != .finished else { return false }
+
+        let opponents = tournament.players
+        let player = Player(name: trimmed)
+        player.tournament = tournament
+        modelContext.insert(player)
+
+        guard !tournament.matches.isEmpty else { return true }
+
+        let lastRound = tournament.matches.map(\.round).max() ?? 0
+        for (index, opponent) in opponents.enumerated() {
+            let match = Match(round: lastRound + 1 + index, player1: opponent, player2: player)
+            match.tournament = tournament
+            modelContext.insert(match)
+        }
+        return true
+    }
+
     // si ya tenia resultado le quito antes el puntaje viejo, si no nomas duplicaria puntos al corregir
     func recordResult(for match: Match, score1: Double, score2: Double) {
         if match.isComplete {
