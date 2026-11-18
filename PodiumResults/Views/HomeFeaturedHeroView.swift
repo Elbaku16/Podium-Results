@@ -2,6 +2,9 @@ import SwiftUI
 
 struct HomeFeaturedHeroView: View {
     let tournament: Tournament
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var heroHeight: CGFloat { typeSize.isAccessibilitySize ? 340 : 180 }
 
     private var currentRound: Int {
         let rounds = tournament.matches.map(\.round)
@@ -28,14 +31,14 @@ struct HomeFeaturedHeroView: View {
                     Image("ChessBackdrop")
                         .resizable()
                         .scaledToFill()
-                        .frame(height: 180)
+                        .frame(height: heroHeight)
                         .clipped()
 
                     LinearGradient(
                         colors: [Color.podiumCharcoal.opacity(0.05), Color.podiumCharcoal.opacity(0.45), Color.podiumCharcoal.opacity(0.97)],
                         startPoint: .top, endPoint: .bottom
                     )
-                    .frame(height: 180)
+                    .frame(height: heroHeight)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("FEATURED TOURNAMENT")
@@ -78,7 +81,7 @@ struct HomeFeaturedHeroView: View {
                     .environment(\.colorScheme, .dark)
                     .padding(12)
             }
-            .frame(height: 180)
+            .frame(height: heroHeight)
 
             NavigationLink(value: tournament) {
                 HStack {

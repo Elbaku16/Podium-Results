@@ -5,6 +5,7 @@ import FirebaseCore
 @main
 struct PodiumResultsApp: App {
     @State private var authViewModel: AuthViewModel
+    @State private var showLaunch = true
 
     init() {
         FirebaseApp.configure()
@@ -13,8 +14,20 @@ struct PodiumResultsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            WelcomeView()
-                .environment(authViewModel)
+            ZStack {
+                if showLaunch {
+                    LaunchView()
+                        .transition(.opacity)
+                } else {
+                    WelcomeView()
+                        .transition(.opacity)
+                }
+            }
+            .environment(authViewModel)
+            .task {
+                try? await Task.sleep(for: .seconds(1.6))
+                withAnimation(.easeInOut(duration: 0.5)) { showLaunch = false }
+            }
         }
         .modelContainer(for: [Tournament.self, Player.self, Match.self])
     }

@@ -25,6 +25,8 @@ struct StatusLabel: View {
     var body: some View {
         Text(status.rawValue)
             .font(.caption2.weight(.bold))
+            .lineLimit(1)
+            .fixedSize()
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .foregroundStyle(status == .live ? .white : Color.podiumMuted)
@@ -59,6 +61,7 @@ struct EmptyStateView: View {
 
 struct TournamentRow: View {
     let tournament: Tournament
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         HStack(spacing: 14) {
@@ -75,15 +78,22 @@ struct TournamentRow: View {
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             VStack(alignment: .leading, spacing: 5) {
-                HStack(alignment: .top, spacing: 8) {
+                if typeSize.isAccessibilitySize {
                     Text(tournament.name)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Spacer(minLength: 8)
                     StatusLabel(status: tournament.status)
+                } else {
+                    HStack(alignment: .top, spacing: 8) {
+                        Text(tournament.name)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        Spacer(minLength: 8)
+                        StatusLabel(status: tournament.status)
+                    }
                 }
-                HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
                     if !tournament.location.isEmpty {
                         Label(tournament.location, systemImage: "mappin.and.ellipse")
                     }
@@ -91,7 +101,6 @@ struct TournamentRow: View {
                 }
                 .font(.caption2)
                 .foregroundStyle(Color.podiumMuted)
-                .lineLimit(1)
             }
 
             Image(systemName: "chevron.right")

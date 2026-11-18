@@ -51,6 +51,8 @@ struct ContentView: View {
             Text("Tournaments")
                 .font(.title2.weight(.bold))
                 .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             Spacer()
             HStack(spacing: 10) {
                 Button {
@@ -107,6 +109,7 @@ struct ContentView: View {
                 }
             }
             sortMenu
+                .fixedSize()
         }
     }
 
