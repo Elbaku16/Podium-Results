@@ -5,9 +5,8 @@ struct ProfileView: View {
     @Environment(AuthViewModel.self) private var auth
     @Environment(\.dismiss) private var dismiss
     @Query private var tournaments: [Tournament]
-    @State private var isShowingAbout = false
-    @State private var comingSoonMessage: String?
     @State private var isScrolled = false
+    @State private var photo = ProfilePhotoViewModel()
 
     private var totalMatchesPlayed: Int {
         tournaments.flatMap(\.matches).filter(\.isComplete).count
@@ -43,7 +42,7 @@ struct ProfileView: View {
                         identityBlock
                         statsCard
                         activityCard
-                        ProfileSettingsCard(onAbout: { isShowingAbout = true }, onComingSoon: { comingSoonMessage = $0 })
+                        ProfileSettingsCard()
                         signOutButton
                     }
                     .padding(.horizontal, 20)
@@ -61,67 +60,50 @@ struct ProfileView: View {
                     .opacity(isScrolled ? 1 : 0)
                     .animation(.easeOut(duration: 0.2), value: isScrolled)
                     .allowsHitTesting(false)
-                .navigationDestination(for: Tournament.self) { tournament in
-                    TournamentDetailView(tournament: tournament)
-                }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: Tournament.self) { tournament in
+                TournamentDetailView(tournament: tournament)
+            }
+            .navigationDestination(for: ProfileDestination.self) { destination in
+                switch destination {
+                case .personal: PersonalInformationView(onAccountClosed: { dismiss() })
+                case .preferences: PreferencesView()
+                case .help: HelpSupportView()
+                case .about: AboutView()
+                }
+            }
         }
         .tint(.podiumCopper)
-        .sheet(isPresented: $isShowingAbout) {
-            ProfileAboutSheet(isPresented: $isShowingAbout)
-        }
-        .alert("Coming Soon", isPresented: Binding(get: { comingSoonMessage != nil }, set: { if !$0 { comingSoonMessage = nil } })) {
-            Button("OK") { comingSoonMessage = nil }
-        } message: {
-            Text(comingSoonMessage ?? "")
-        }
+        .onAppear { photo.load(for: auth.user?.uid) }
+        .onChange(of: auth.user?.uid) { _, uid in photo.load(for: uid) }
     }
 
     private var topBar: some View {
         HStack {
-            HStack(spacing: 8) {
-                ChessKingShape()
-                    .fill(Color.podiumCopper)
-                    .frame(width: 22, height: 28)
+            HStack(spacing: 10) {
+                Image("PodiumMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 30, height: 32)
                 Text("PODIUM\nRESULTS")
                     .font(.caption.weight(.bold))
                     .tracking(1.5)
                     .foregroundStyle(Color.podiumBeige)
             }
             Spacer()
-            Button {
-                comingSoonMessage = "App preferences are coming in a future update."
-            } label: {
+            NavigationLink(value: ProfileDestination.preferences) {
                 Image(systemName: "gearshape")
                     .font(.title3)
                     .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
             }
         }
     }
 
     private var identityBlock: some View {
         VStack(spacing: 12) {
-            ZStack(alignment: .bottomTrailing) {
-                Circle()
-                    .fill(Color.white.opacity(0.04))
-                    .overlay(Circle().stroke(Color.podiumCopper, lineWidth: 3))
-                    .frame(width: 112, height: 112)
-                    .overlay(
-                        ChessKingView()
-                            .frame(width: 58, height: 68)
-                    )
-                Button {
-                    comingSoonMessage = "Personal profile fields will be available soon."
-                } label: {
-                    Image(systemName: "pencil")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 30, height: 30)
-                        .background(Color.podiumCopper.opacity(0.7))
-                        .clipShape(Circle())
-                }
-            }
+            ProfileAvatarView(photo: photo, name: auth.user?.name)
             VStack(spacing: 4) {
                 Text(auth.user?.name ?? "Guest Organizer")
                     .font(.title2.weight(.bold))

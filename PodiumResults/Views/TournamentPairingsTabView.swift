@@ -126,7 +126,7 @@ struct TournamentPairingsTabView: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text("BYE")
+                Text(match.score1 < 1 ? "MISSED \u{00B7} \(match.score1.scoreText)" : "BYE")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Color.podiumMuted)
                     .frame(width: 56 + 56, alignment: .trailing)

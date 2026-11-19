@@ -4,6 +4,7 @@ struct AuthUser {
     let uid: String
     let email: String
     let name: String
+    var createdAt: Date? = nil
 }
 
 struct AuthServiceError: LocalizedError {
@@ -16,4 +17,6 @@ protocol AuthServiceProtocol {
     func signUp(name: String, email: String, password: String) async throws -> AuthUser
     func signIn(email: String, password: String) async throws -> AuthUser
     func signOut() throws
+    func updateName(_ name: String) async throws -> AuthUser
+    func deleteAccount() async throws
 }

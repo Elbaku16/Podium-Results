@@ -3,10 +3,12 @@ import SwiftUI
 struct AddPlayerView: View {
     let existingNames: [String]
     let hasSchedule: Bool
-    let onAdd: (String) -> Void
+    let entryRound: Int?
+    let onAdd: (String, Double) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
+    @AppStorage("missedRoundPoints") private var missedRoundPoints = 0.5
     @FocusState private var isFocused: Bool
 
     private var trimmed: String { name.trimmingCharacters(in: .whitespaces) }
@@ -37,8 +39,12 @@ struct AddPlayerView: View {
                         Text("There is already a player with that name.")
                             .font(.caption)
                             .foregroundStyle(Color.podiumCopper)
+                    }
+
+                    if let entryRound {
+                        entryCard(round: entryRound)
                     } else if hasSchedule {
-                        Text("The new player gets one extra round against each current player.")
+                        Text("No games have been played yet, so the schedule will be made again with the new player.")
                             .font(.caption)
                             .foregroundStyle(Color.podiumMuted)
                     }
@@ -70,7 +76,27 @@ struct AddPlayerView: View {
 
     private func save() {
         guard !trimmed.isEmpty, !isDuplicate else { return }
-        onAdd(trimmed)
+        onAdd(trimmed, entryRound == nil ? 0 : missedRoundPoints)
         dismiss()
+    }
+
+    private func entryCard(round: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("He joins in round \(round). Rounds already played don't change.")
+                .font(.caption)
+                .foregroundStyle(Color.podiumMuted)
+            if round > 1 {
+                Text("POINTS FOR THE \(round - 1 == 1 ? "ROUND" : "ROUNDS") HE MISSED")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.podiumMuted)
+                    .padding(.top, 4)
+                Picker("Points for missed rounds", selection: $missedRoundPoints) {
+                    Text("Half point").tag(0.5)
+                    Text("No points").tag(0.0)
+                }
+                .pickerStyle(.segmented)
+                .environment(\.colorScheme, .dark)
+            }
+        }
     }
 }

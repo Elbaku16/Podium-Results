@@ -20,7 +20,11 @@ struct TournamentDetailViewModel {
     }
 
     func generateSchedule(for tournament: Tournament) {
-        let pairings = pairingService.generateSchedule(for: tournament.players)
+        createMatches(for: tournament, players: tournament.players)
+    }
+
+    private func createMatches(for tournament: Tournament, players: [Player]) {
+        let pairings = pairingService.generateSchedule(for: players)
 
         for pairing in pairings {
             if let player2 = pairing.player2 {
@@ -37,13 +41,19 @@ struct TournamentDetailViewModel {
         }
     }
 
+    func entryRound(for tournament: Tournament) -> Int? {
+        let played = tournament.matches.filter { $0.isComplete && $0.player2 != nil }
+        guard let lastPlayed = played.map(\.round).max() else { return nil }
+        return lastPlayed + 1
+    }
+
     @discardableResult
-    func addPlayer(named name: String, to tournament: Tournament) -> Bool {
+    func addPlayer(named name: String, to tournament: Tournament, missedRoundPoints: Double = 0) -> Bool {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let isDuplicate = tournament.players.contains { $0.name.lowercased() == trimmed.lowercased() }
         guard !trimmed.isEmpty, !isDuplicate, tournament.status != .finished else { return false }
 
-        let opponents = tournament.players
+        let current = tournament.players
         let player = Player(name: trimmed)
         player.tournament = tournament
         modelContext.insert(player)
@@ -52,13 +62,68 @@ struct TournamentDetailViewModel {
 
         notify("New player", "\(trimmed) joined \(tournament.name).", icon: "person.badge.plus")
 
-        let lastRound = tournament.matches.map(\.round).max() ?? 0
-        for (index, opponent) in opponents.enumerated() {
-            let match = Match(round: lastRound + 1 + index, player1: opponent, player2: player)
-            match.tournament = tournament
-            modelContext.insert(match)
+        guard let firstRound = entryRound(for: tournament) else {
+            tournament.matches.forEach(modelContext.delete)
+            (current + [player]).forEach { $0.score = 0 }
+            createMatches(for: tournament, players: current + [player])
+            return true
         }
+
+        for round in 1..<firstRound {
+            let missed = Match(round: round, player1: player, player2: nil, score1: missedRoundPoints, score2: 0, isComplete: true)
+            missed.tournament = tournament
+            modelContext.insert(missed)
+            player.score += missedRoundPoints
+        }
+
+        pairLatePlayer(player, from: firstRound, in: tournament)
         return true
+    }
+
+    private func pairLatePlayer(_ player: Player, from firstRound: Int, in tournament: Tournament) {
+        let lastRound = tournament.matches.map(\.round).max() ?? firstRound
+        var met = Set<UUID>()
+
+        for round in firstRound...max(firstRound, lastRound) {
+            let inRound = tournament.matches.filter { $0.round == round && $0.player1?.id != player.id }
+
+            if let bye = inRound.first(where: { $0.player2 == nil }), let holder = bye.player1, !met.contains(holder.id) {
+                holder.score -= bye.score1
+                bye.player2 = player
+                bye.score1 = 0
+                bye.score2 = 0
+                bye.isComplete = false
+                met.insert(holder.id)
+                continue
+            }
+
+            let candidates = inRound.filter { $0.player2 != nil && !$0.isComplete }
+            var chosen: (game: Match, opponent: Player, resting: Player)?
+            for game in candidates {
+                guard let first = game.player1, let second = game.player2 else { continue }
+                let firstFree = !met.contains(first.id)
+                let secondFree = !met.contains(second.id)
+                if firstFree && secondFree {
+                    let lowerFirst = first.score < second.score
+                    chosen = (game, lowerFirst ? second : first, lowerFirst ? first : second)
+                } else if firstFree {
+                    chosen = (game, first, second)
+                } else if secondFree {
+                    chosen = (game, second, first)
+                }
+                if chosen != nil { break }
+            }
+            guard let (game, opponent, resting) = chosen else { continue }
+
+            game.player1 = opponent
+            game.player2 = player
+            met.insert(opponent.id)
+
+            let rest = Match(round: round, player1: resting, player2: nil, score1: 1, score2: 0, isComplete: true)
+            rest.tournament = tournament
+            modelContext.insert(rest)
+            resting.score += 1
+        }
     }
 
     // si ya tenia resultado le quito antes el puntaje viejo, si no nomas duplicaria puntos al corregir

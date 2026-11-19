@@ -25,6 +25,24 @@ final class AuthViewModel {
         await run { try await service.signUp(name: name, email: email, password: password) }
     }
 
+    func updateName(_ name: String) async -> Bool {
+        await run { try await service.updateName(name) }
+    }
+
+    func deleteAccount() async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            try await service.deleteAccount()
+            user = nil
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     func signOut() {
         try? service.signOut()
         user = nil

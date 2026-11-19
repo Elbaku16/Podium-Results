@@ -123,9 +123,10 @@ struct TournamentDetailView: View {
         .sheet(isPresented: $isShowingAddPlayer) {
             AddPlayerView(
                 existingNames: tournament.players.map(\.name),
-                hasSchedule: !tournament.matches.isEmpty
-            ) { name in
-                viewModel.addPlayer(named: name, to: tournament)
+                hasSchedule: !tournament.matches.isEmpty,
+                entryRound: viewModel.entryRound(for: tournament)
+            ) { name, missedPoints in
+                viewModel.addPlayer(named: name, to: tournament, missedRoundPoints: missedPoints)
                 Task { await publishViewModel.refreshIfPublished(tournament, user: auth.user) }
             }
         }
