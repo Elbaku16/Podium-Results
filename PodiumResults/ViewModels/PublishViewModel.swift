@@ -27,10 +27,17 @@ final class PublishViewModel {
         state = .publishing
         do {
             try await service.publish(tournament, ownerID: user.uid)
+            tournament.publishedAt = .now
             state = .published
         } catch {
             state = .failed(message(for: error))
         }
+    }
+
+    func refreshIfPublished(_ tournament: Tournament, user: AuthUser?) async {
+        guard tournament.publishedAt != nil, let user else { return }
+        try? await service.publish(tournament, ownerID: user.uid)
+        tournament.publishedAt = .now
     }
 
     private func message(for error: Error) -> String {

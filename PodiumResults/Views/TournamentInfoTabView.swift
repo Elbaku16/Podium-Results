@@ -32,10 +32,11 @@ struct TournamentInfoTabView: View {
     }
 
     private var publishSection: some View {
-        VStack(spacing: 8) {
+        let isPublished = tournament.publishedAt != nil
+        return VStack(spacing: 8) {
             Button(action: onPublish) {
-                Label(publishState == .published ? "Published" : "Publish Online",
-                      systemImage: publishState == .published ? "checkmark.circle.fill" : "icloud.and.arrow.up")
+                Label(isPublished ? "Update Online" : "Publish Online",
+                      systemImage: isPublished ? "checkmark.icloud" : "icloud.and.arrow.up")
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -49,6 +50,9 @@ struct TournamentInfoTabView: View {
                 Text("Publishing...").font(.caption).foregroundStyle(Color.podiumMuted)
             } else if case .failed(let message) = publishState {
                 Text(message).font(.caption).foregroundStyle(Color.podiumCopper)
+            } else if let publishedAt = tournament.publishedAt {
+                Text("Online \u{00B7} updated \(publishedAt.formatted(.relative(presentation: .named)))")
+                    .font(.caption).foregroundStyle(Color.podiumMuted)
             } else if tournament.matches.isEmpty {
                 Text("Generate the schedule first to publish.").font(.caption).foregroundStyle(Color.podiumMuted)
             }

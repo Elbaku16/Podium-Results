@@ -14,6 +14,7 @@ final class Tournament {
     var timeControl: String = ""
     var arbiter: String = ""
     var categories: String = ""
+    var publishedAt: Date?
 
     @Relationship(deleteRule: .cascade, inverse: \Player.tournament)
     var players: [Player] = []

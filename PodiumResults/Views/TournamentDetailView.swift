@@ -105,6 +105,7 @@ struct TournamentDetailView: View {
         .sheet(item: $matchBeingScored) { match in
             ScoreEntryView(match: match) { score1, score2 in
                 viewModel.recordResult(for: match, score1: score1, score2: score2)
+                Task { await publishViewModel.refreshIfPublished(tournament, user: auth.user) }
                 showConfetti = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { showConfetti = false }
             }
@@ -115,6 +116,7 @@ struct TournamentDetailView: View {
                 hasSchedule: !tournament.matches.isEmpty
             ) { name in
                 viewModel.addPlayer(named: name, to: tournament)
+                Task { await publishViewModel.refreshIfPublished(tournament, user: auth.user) }
             }
         }
         .sheet(item: $selectedPlayer) { player in
