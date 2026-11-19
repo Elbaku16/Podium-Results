@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import FirebaseCore
+import UserNotifications
 
 @main
 struct PodiumResultsApp: App {
@@ -9,6 +10,7 @@ struct PodiumResultsApp: App {
 
     init() {
         FirebaseApp.configure()
+        UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
         _authViewModel = State(initialValue: AuthViewModel())
     }
 
@@ -29,6 +31,6 @@ struct PodiumResultsApp: App {
                 withAnimation(.easeInOut(duration: 0.5)) { showLaunch = false }
             }
         }
-        .modelContainer(for: [Tournament.self, Player.self, Match.self])
+        .modelContainer(for: [Tournament.self, Player.self, Match.self, AppNotification.self])
     }
 }

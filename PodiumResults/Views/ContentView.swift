@@ -4,7 +4,6 @@ import SwiftData
 struct ContentView: View {
     @Query(sort: \Tournament.date, order: .reverse) private var tournaments: [Tournament]
     @State private var isShowingNewTournament = false
-    @State private var isShowingNotifications = false
     @State private var searchText = ""
     @State private var selectedFilter: TournamentStatus?
     @State private var sortOption: TournamentSort = .newest
@@ -41,9 +40,6 @@ struct ContentView: View {
         .sheet(isPresented: $isShowingNewTournament) {
             NewTournamentView()
         }
-        .sheet(isPresented: $isShowingNotifications) {
-            NotificationsView()
-        }
     }
 
     private var header: some View {
@@ -65,16 +61,7 @@ struct ContentView: View {
                         .background(Color.podiumCopper)
                         .clipShape(Circle())
                 }
-                Button {
-                    isShowingNotifications = true
-                } label: {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.06))
-                        .clipShape(Circle())
-                }
+                NotificationBell()
             }
         }
         .padding(.bottom, 4)

@@ -9,6 +9,7 @@ struct TournamentInfoTabView: View {
     let onAddPlayer: () -> Void
     let publishState: PublishViewModel.State
     let onPublish: () -> Void
+    let onUnpublish: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -53,6 +54,12 @@ struct TournamentInfoTabView: View {
             } else if let publishedAt = tournament.publishedAt {
                 Text("Online \u{00B7} updated \(publishedAt.formatted(.relative(presentation: .named)))")
                     .font(.caption).foregroundStyle(Color.podiumMuted)
+            }
+
+            if isPublished && publishState != .publishing {
+                Button("Remove from Online", role: .destructive, action: onUnpublish)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.podiumCopper)
             } else if tournament.matches.isEmpty {
                 Text("Generate the schedule first to publish.").font(.caption).foregroundStyle(Color.podiumMuted)
             }

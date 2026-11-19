@@ -10,6 +10,7 @@ struct TournamentDetailView: View {
     @State private var showConfetti = false
     @State private var isShowingAddPlayer = false
     @State private var publishViewModel = PublishViewModel()
+    @State private var isConfirmingUnpublish = false
     @Environment(AuthViewModel.self) private var auth
     @State private var selectedTab: DetailTab
 
@@ -75,7 +76,8 @@ struct TournamentDetailView: View {
                                 publishState: publishViewModel.state,
                                 onPublish: {
                                     Task { await publishViewModel.publish(tournament, user: auth.user) }
-                                }
+                                },
+                                onUnpublish: { isConfirmingUnpublish = true }
                             )
                         case .pairings:
                             TournamentPairingsTabView(
@@ -109,6 +111,14 @@ struct TournamentDetailView: View {
                 showConfetti = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { showConfetti = false }
             }
+        }
+        .confirmationDialog("Remove this tournament from online?", isPresented: $isConfirmingUnpublish, titleVisibility: .visible) {
+            Button("Remove from Online", role: .destructive) {
+                Task { await publishViewModel.unpublish(tournament) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("It stays on your phone. Only the online copy is deleted.")
         }
         .sheet(isPresented: $isShowingAddPlayer) {
             AddPlayerView(

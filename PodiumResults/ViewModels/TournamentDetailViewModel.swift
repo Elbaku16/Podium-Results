@@ -4,10 +4,19 @@ import SwiftData
 struct TournamentDetailViewModel {
     private let modelContext: ModelContext
     private let pairingService: PairingServiceProtocol
+    private let notifier: NotificationServiceProtocol
 
-    init(modelContext: ModelContext, pairingService: PairingServiceProtocol = RoundRobinPairingService()) {
+    init(modelContext: ModelContext,
+         pairingService: PairingServiceProtocol = RoundRobinPairingService(),
+         notifier: NotificationServiceProtocol = LocalNotificationService()) {
         self.modelContext = modelContext
         self.pairingService = pairingService
+        self.notifier = notifier
+    }
+
+    private func notify(_ title: String, _ message: String, icon: String) {
+        modelContext.insert(AppNotification(title: title, message: message, icon: icon))
+        notifier.deliver(title: title, body: message)
     }
 
     func generateSchedule(for tournament: Tournament) {
@@ -41,6 +50,8 @@ struct TournamentDetailViewModel {
 
         guard !tournament.matches.isEmpty else { return true }
 
+        notify("New player", "\(trimmed) joined \(tournament.name).", icon: "person.badge.plus")
+
         let lastRound = tournament.matches.map(\.round).max() ?? 0
         for (index, opponent) in opponents.enumerated() {
             let match = Match(round: lastRound + 1 + index, player1: opponent, player2: player)
@@ -52,6 +63,7 @@ struct TournamentDetailViewModel {
 
     // si ya tenia resultado le quito antes el puntaje viejo, si no nomas duplicaria puntos al corregir
     func recordResult(for match: Match, score1: Double, score2: Double) {
+        let wasComplete = match.isComplete
         if match.isComplete {
             applyStandingsPoints(match.score1, match.score2, to: match, sign: -1)
         }
@@ -59,6 +71,21 @@ struct TournamentDetailViewModel {
         match.score2 = score2
         match.isComplete = true
         applyStandingsPoints(score1, score2, to: match, sign: 1)
+        if !wasComplete { announceProgress(after: match) }
+    }
+
+    private func announceProgress(after match: Match) {
+        guard let tournament = match.tournament else { return }
+        if tournament.status == .finished {
+            let winner = TiebreakCalculator.standings(for: tournament).first?.player.name ?? "Someone"
+            notify("\(tournament.name) finished", "\(winner) wins the tournament.", icon: "crown.fill")
+            return
+        }
+        let roundDone = tournament.matches.filter { $0.round == match.round }.allSatisfy(\.isComplete)
+        if roundDone {
+            notify("Round \(match.round) complete", "All games of round \(match.round) in \(tournament.name) are finished.",
+                   icon: "checkmark.seal.fill")
+        }
     }
 
     private func applyStandingsPoints(_ score1: Double, _ score2: Double, to match: Match, sign: Double) {

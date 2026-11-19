@@ -34,6 +34,17 @@ final class PublishViewModel {
         }
     }
 
+    func unpublish(_ tournament: Tournament) async {
+        state = .publishing
+        do {
+            try await service.unpublish(tournament)
+            tournament.publishedAt = nil
+            state = .idle
+        } catch {
+            state = .failed("Couldn't remove it. Check your internet and try again.")
+        }
+    }
+
     func refreshIfPublished(_ tournament: Tournament, user: AuthUser?) async {
         guard tournament.publishedAt != nil, let user else { return }
         try? await service.publish(tournament, ownerID: user.uid)
