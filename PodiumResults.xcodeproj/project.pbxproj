@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9775932E309C143A005F1AFB /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9775932D309C143A005F1AFB /* FirebaseAuth */; };
+		A1B2C3D4E5F600010000A001 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F600010000A002 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9775932E309C143A005F1AFB /* FirebaseAuth in Frameworks */,
+				A1B2C3D4E5F600010000A001 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = PodiumResults;
 			packageProductDependencies = (
 				9775932D309C143A005F1AFB /* FirebaseAuth */,
+				A1B2C3D4E5F600010000A002 /* FirebaseFirestore */,
 			);
 			productName = PodiumResults;
 			productReference = 3D7F47D8D4A347B28859F2A8 /* PodiumResults.app */;
@@ -362,6 +365,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9775932C309C143A005F1AFB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
+		};
+		A1B2C3D4E5F600010000A002 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9775932C309C143A005F1AFB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

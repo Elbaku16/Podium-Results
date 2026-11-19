@@ -35,7 +35,7 @@ struct FirebaseAuthService: AuthServiceProtocol {
     private func makeUser(from user: User) -> AuthUser {
         let email = user.email ?? ""
         let name = user.displayName ?? ""
-        return AuthUser(email: email, name: name.isEmpty ? email : name)
+        return AuthUser(uid: user.uid, email: email, name: name.isEmpty ? email : name)
     }
 
     private func friendlyMessage(for error: Error) -> String {

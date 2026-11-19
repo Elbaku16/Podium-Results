@@ -1,6 +1,7 @@
 import Foundation
 
 struct AuthUser {
+    let uid: String
     let email: String
     let name: String
 }

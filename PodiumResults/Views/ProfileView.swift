@@ -7,6 +7,7 @@ struct ProfileView: View {
     @Query private var tournaments: [Tournament]
     @State private var isShowingAbout = false
     @State private var comingSoonMessage: String?
+    @State private var isScrolled = false
 
     private var totalMatchesPlayed: Int {
         tournaments.flatMap(\.matches).filter(\.isComplete).count
@@ -20,38 +21,55 @@ struct ProfileView: View {
         tournaments.sorted { $0.date > $1.date }
     }
 
+    let onExplore: () -> Void
+
+    init(onExplore: @escaping () -> Void = {}) {
+        self.onExplore = onExplore
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.podiumCharcoal.ignoresSafeArea()
 
+                ChessboardBackdrop()
+                    .frame(height: 430)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .ignoresSafeArea(edges: .top)
+
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: 18) {
+                        topBar
                         identityBlock
-                        statsRow
-                        if !recentTournaments.isEmpty {
-                            tournamentsSection
-                        }
-                        settingsSection
+                        statsCard
+                        activityCard
+                        ProfileSettingsCard(onAbout: { isShowingAbout = true }, onComingSoon: { comingSoonMessage = $0 })
                         signOutButton
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 60)
+                    .padding(.top, 8)
                 }
+                .trackScrolled($isScrolled)
+                .contentMargins(.bottom, 100, for: .scrollContent)
+                .contentMargins(.bottom, 0, for: .scrollIndicators)
+
+                LinearGradient(colors: [Color.podiumCharcoal, Color.podiumCharcoal, Color.podiumCharcoal.opacity(0)],
+                               startPoint: .top, endPoint: .bottom)
+                    .frame(height: 96)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .ignoresSafeArea(edges: .top)
+                    .opacity(isScrolled ? 1 : 0)
+                    .animation(.easeOut(duration: 0.2), value: isScrolled)
+                    .allowsHitTesting(false)
                 .navigationDestination(for: Tournament.self) { tournament in
                     TournamentDetailView(tournament: tournament)
                 }
             }
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.podiumCharcoal, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
         }
         .tint(.podiumCopper)
         .sheet(isPresented: $isShowingAbout) {
-            aboutSheet
+            ProfileAboutSheet(isPresented: $isShowingAbout)
         }
         .alert("Coming Soon", isPresented: Binding(get: { comingSoonMessage != nil }, set: { if !$0 { comingSoonMessage = nil } })) {
             Button("OK") { comingSoonMessage = nil }
@@ -60,121 +78,153 @@ struct ProfileView: View {
         }
     }
 
-    private var identityBlock: some View {
-        VStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .stroke(Color.podiumCopper, lineWidth: 1.5)
-                    .frame(width: 88, height: 88)
-                Image(systemName: "person.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(Color.podiumCopper)
+    private var topBar: some View {
+        HStack {
+            HStack(spacing: 8) {
+                ChessKingShape()
+                    .fill(Color.podiumCopper)
+                    .frame(width: 22, height: 28)
+                Text("PODIUM\nRESULTS")
+                    .font(.caption.weight(.bold))
+                    .tracking(1.5)
+                    .foregroundStyle(Color.podiumBeige)
             }
-            VStack(spacing: 2) {
+            Spacer()
+            Button {
+                comingSoonMessage = "App preferences are coming in a future update."
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+            }
+        }
+    }
+
+    private var identityBlock: some View {
+        VStack(spacing: 12) {
+            ZStack(alignment: .bottomTrailing) {
+                Circle()
+                    .fill(Color.white.opacity(0.04))
+                    .overlay(Circle().stroke(Color.podiumCopper, lineWidth: 3))
+                    .frame(width: 112, height: 112)
+                    .overlay(
+                        ChessKingView()
+                            .frame(width: 58, height: 68)
+                    )
+                Button {
+                    comingSoonMessage = "Personal profile fields will be available soon."
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(Color.podiumCopper.opacity(0.7))
+                        .clipShape(Circle())
+                }
+            }
+            VStack(spacing: 4) {
                 Text(auth.user?.name ?? "Guest Organizer")
-                    .font(.title3.weight(.bold))
+                    .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
                 Text(auth.user?.email ?? "Not signed in")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(Color.podiumMuted)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 8)
+        .padding(.top, 4)
     }
 
-    private var statsRow: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 0) {
-                statTile(value: tournaments.count, label: "Tournaments")
-                statDivider
-                statTile(value: totalMatchesPlayed, label: "Matches Played")
-                statDivider
-                statTile(value: distinctPlayerCount, label: "Unique Players")
-            }
-            Text("From tournaments stored on this device")
-                .font(.caption2)
-                .foregroundStyle(Color.podiumMuted.opacity(0.7))
+    private var statsCard: some View {
+        HStack(spacing: 0) {
+            statTile(icon: "trophy.fill", value: tournaments.count, label: "Tournaments")
+            statDivider
+            statTile(icon: "square.grid.3x3.fill", value: totalMatchesPlayed, label: "Matches Played")
+            statDivider
+            statTile(icon: "person.2.fill", value: distinctPlayerCount, label: "Unique Players")
         }
+        .padding(.vertical, 16)
+        .profileCard()
     }
 
     private var statDivider: some View {
         Rectangle()
-            .fill(.white.opacity(0.08))
-            .frame(width: 1, height: 36)
+            .fill(Color.podiumCopper.opacity(0.25))
+            .frame(width: 1, height: 52)
     }
 
-    private func statTile(value: Int, label: String) -> some View {
-        VStack(spacing: 4) {
+    private func statTile(icon: String, value: Int, label: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundStyle(Color.podiumCopper)
             Text("\(value)")
-                .font(.title3.weight(.bold))
+                .font(.title2.weight(.bold))
                 .foregroundStyle(.white)
             Text(label)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(Color.podiumMuted)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
     }
 
-    private var tournamentsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            SectionHeading(title: "My Tournaments")
-            VStack(spacing: 0) {
-                ForEach(Array(recentTournaments.enumerated()), id: \.element.id) { index, tournament in
-                    NavigationLink(value: tournament) {
-                        TournamentRow(tournament: tournament)
-                    }
-                    .buttonStyle(.plain)
-                    if index != recentTournaments.count - 1 {
-                        Divider().overlay(.white.opacity(0.07))
-                    }
-                }
-            }
-        }
-    }
-
-    private var settingsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            SectionHeading(title: "Settings")
-            VStack(spacing: 0) {
-                settingsRow(icon: "person.text.rectangle", title: "Personal Information") {
-                    comingSoonMessage = "Personal profile fields will be available once accounts are live."
-                }
-                Divider().overlay(.white.opacity(0.07))
-                settingsRow(icon: "slider.horizontal.3", title: "Preferences") {
-                    comingSoonMessage = "App preferences are coming in a future update."
-                }
-                Divider().overlay(.white.opacity(0.07))
-                settingsRow(icon: "questionmark.circle", title: "Help & Support") {
-                    comingSoonMessage = "Support channels aren't set up yet, but they're on the roadmap."
-                }
-                Divider().overlay(.white.opacity(0.07))
-                settingsRow(icon: "info.circle", title: "About Podium Results") {
-                    isShowingAbout = true
-                }
-            }
-        }
-    }
-
-    private func settingsRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.subheadline)
+    private var activityCard: some View {
+        VStack(spacing: 14) {
+            HStack {
+                Image(systemName: "waveform.path.ecg")
                     .foregroundStyle(Color.podiumCopper)
-                    .frame(width: 22)
-                Text(title)
-                    .font(.subheadline)
+                Text("Your Activity")
+                    .font(.headline)
                     .foregroundStyle(.white)
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.podiumMuted.opacity(0.5))
+                Button(action: onExplore) {
+                    Text("View All \u{203A}")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Color.podiumCopper)
+                }
             }
-            .padding(.vertical, 12)
+
+            if recentTournaments.isEmpty {
+                VStack(spacing: 6) {
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 34))
+                        .foregroundStyle(Color.podiumBeige)
+                    Text("No tournaments yet")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text("Create or join a tournament to get started!")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.podiumMuted)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.vertical, 8)
+
+                Button(action: onExplore) {
+                    Text("Explore Tournaments")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(Color.podiumCharcoal)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.podiumCopper)
+                        .clipShape(Capsule())
+                }
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(recentTournaments.prefix(3).enumerated()), id: \.element.id) { index, tournament in
+                        NavigationLink(value: tournament) {
+                            TournamentRow(tournament: tournament)
+                        }
+                        .buttonStyle(.plain)
+                        if index != min(recentTournaments.count, 3) - 1 {
+                            Divider().overlay(.white.opacity(0.07))
+                        }
+                    }
+                }
+            }
         }
-        .buttonStyle(.plain)
+        .padding(16)
+        .profileCard()
     }
 
     private var signOutButton: some View {
@@ -182,47 +232,14 @@ struct ProfileView: View {
             auth.signOut()
             dismiss()
         } label: {
-            Text(auth.isLoggedIn ? "Sign Out" : "Back to Login")
+            Label(auth.isLoggedIn ? "Sign Out" : "Back to Login", systemImage: "rectangle.portrait.and.arrow.right")
                 .font(.headline)
-                .frame(maxWidth: .infinity)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 40)
                 .padding(.vertical, 14)
+                .overlay(Capsule().stroke(Color.podiumCopper, lineWidth: 1.5))
         }
-        .foregroundStyle(.white)
-        .background(Color.white.opacity(0.08))
-        .clipShape(Capsule())
-    }
-
-    private var aboutSheet: some View {
-        NavigationStack {
-            ZStack {
-                Color.podiumCharcoal.ignoresSafeArea()
-                VStack(spacing: 10) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 34))
-                        .foregroundStyle(Color.podiumCopper)
-                    Text("PODIUM RESULTS")
-                        .font(.caption.weight(.semibold))
-                        .tracking(3)
-                        .foregroundStyle(Color.podiumCopper)
-                    Text("Version 1.0")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.4))
-                    Text("A tournament app for chess: automatic schedules, real FIDE tiebreak standings, and a simple way for local clubs to run their events.")
-                        .font(.footnote)
-                        .foregroundStyle(Color.podiumMuted)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 30)
-                        .padding(.top, 4)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { isShowingAbout = false }
-                }
-            }
-        }
-        .presentationDetents([.medium])
+        .padding(.top, 4)
     }
 }
 
@@ -232,3 +249,17 @@ struct ProfileView: View {
         .modelContainer(for: [Tournament.self, Player.self, Match.self], inMemory: true)
 }
 
+private extension View {
+    @ViewBuilder
+    func trackScrolled(_ isScrolled: Binding<Bool>) -> some View {
+        if #available(iOS 18.0, *) {
+            onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top > 6
+            } action: { _, scrolled in
+                isScrolled.wrappedValue = scrolled
+            }
+        } else {
+            onAppear { isScrolled.wrappedValue = true }
+        }
+    }
+}

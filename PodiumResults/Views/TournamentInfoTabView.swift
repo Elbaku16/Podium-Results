@@ -7,6 +7,8 @@ struct TournamentInfoTabView: View {
     let onGenerateSchedule: () -> Void
     let onViewPairings: () -> Void
     let onAddPlayer: () -> Void
+    let publishState: PublishViewModel.State
+    let onPublish: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -15,6 +17,7 @@ struct TournamentInfoTabView: View {
             }
             infoCard
             actionButton
+            publishSection
             if tournament.status != .finished {
                 Button(action: onAddPlayer) {
                     Label("Add Player", systemImage: "person.badge.plus")
@@ -24,6 +27,30 @@ struct TournamentInfoTabView: View {
                 }
                 .foregroundStyle(Color.podiumCopper)
                 .overlay(Capsule().stroke(Color.podiumCopper.opacity(0.6), lineWidth: 1))
+            }
+        }
+    }
+
+    private var publishSection: some View {
+        VStack(spacing: 8) {
+            Button(action: onPublish) {
+                Label(publishState == .published ? "Published" : "Publish Online",
+                      systemImage: publishState == .published ? "checkmark.circle.fill" : "icloud.and.arrow.up")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .foregroundStyle(.white)
+            .background(Color.white.opacity(0.1))
+            .clipShape(Capsule())
+            .disabled(tournament.matches.isEmpty || publishState == .publishing)
+
+            if publishState == .publishing {
+                Text("Publishing...").font(.caption).foregroundStyle(Color.podiumMuted)
+            } else if case .failed(let message) = publishState {
+                Text(message).font(.caption).foregroundStyle(Color.podiumCopper)
+            } else if tournament.matches.isEmpty {
+                Text("Generate the schedule first to publish.").font(.caption).foregroundStyle(Color.podiumMuted)
             }
         }
     }

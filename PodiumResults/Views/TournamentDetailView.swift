@@ -9,6 +9,8 @@ struct TournamentDetailView: View {
     @State private var selectedRound: Int?
     @State private var showConfetti = false
     @State private var isShowingAddPlayer = false
+    @State private var publishViewModel = PublishViewModel()
+    @Environment(AuthViewModel.self) private var auth
     @State private var selectedTab: DetailTab
 
     enum DetailTab: String, CaseIterable {
@@ -69,7 +71,11 @@ struct TournamentDetailView: View {
                                 currentRound: currentRound,
                                 onGenerateSchedule: { viewModel.generateSchedule(for: tournament) },
                                 onViewPairings: { selectedTab = .pairings },
-                                onAddPlayer: { isShowingAddPlayer = true }
+                                onAddPlayer: { isShowingAddPlayer = true },
+                                publishState: publishViewModel.state,
+                                onPublish: {
+                                    Task { await publishViewModel.publish(tournament, user: auth.user) }
+                                }
                             )
                         case .pairings:
                             TournamentPairingsTabView(
