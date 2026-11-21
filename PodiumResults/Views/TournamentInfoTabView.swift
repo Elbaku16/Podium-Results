@@ -5,6 +5,7 @@ struct TournamentInfoTabView: View {
     let rounds: [Int]
     let currentRound: Int
     let onGenerateSchedule: () -> Void
+    let onPairNextRound: () -> Void
     let onViewPairings: () -> Void
     let onAddPlayer: () -> Void
     let publishState: PublishViewModel.State
@@ -19,7 +20,7 @@ struct TournamentInfoTabView: View {
             infoCard
             actionButton
             publishSection
-            if tournament.status != .finished {
+            if tournament.acceptsPlayers {
                 Button(action: onAddPlayer) {
                     Label("Add Player", systemImage: "person.badge.plus")
                         .font(.subheadline.weight(.semibold))
@@ -76,7 +77,7 @@ struct TournamentInfoTabView: View {
                 Text("Round \(currentRound)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
-                Text("In progress")
+                Text(tournament.nextSwissRound.map { "Finished. Round \($0) is ready to pair." } ?? "In progress")
                     .font(.caption)
                     .foregroundStyle(Color.podiumCopper)
             }
@@ -91,7 +92,7 @@ struct TournamentInfoTabView: View {
         VStack(spacing: 0) {
             infoRow(icon: "square.grid.3x3.fill", label: "Format", value: tournament.format)
             Divider().overlay(.white.opacity(0.07))
-            infoRow(icon: "number", label: "Rounds", value: "\(max(rounds.count, 1))")
+            infoRow(icon: "number", label: "Rounds", value: roundsText)
             if !tournament.timeControl.isEmpty {
                 Divider().overlay(.white.opacity(0.07))
                 infoRow(icon: "clock.fill", label: "Time Control", value: tournament.timeControl)
@@ -109,31 +110,49 @@ struct TournamentInfoTabView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
+    private var roundsText: String {
+        if tournament.isSwiss {
+            return tournament.matches.isEmpty ? "\(tournament.totalRounds)" : "\(tournament.latestRound) of \(tournament.totalRounds)"
+        }
+        return "\(max(rounds.count, 1))"
+    }
+
     private var actionButton: some View {
-        Group {
+        VStack(spacing: 10) {
             if tournament.matches.isEmpty {
-                Button(action: onGenerateSchedule) {
-                    Label("Generate Schedule", systemImage: "calendar.badge.clock")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                }
-                .foregroundStyle(.white)
-                .background(tournament.players.count < 2 ? Color.podiumCopper.opacity(0.4) : Color.podiumCopper)
-                .clipShape(Capsule())
-                .disabled(tournament.players.count < 2)
-            } else {
+                primaryButton(tournament.isSwiss ? "Pair Round 1" : "Generate Schedule",
+                              icon: "calendar.badge.clock",
+                              isEnabled: tournament.players.count >= 2,
+                              action: onGenerateSchedule)
+            } else if let next = tournament.nextSwissRound {
+                primaryButton("Pair Round \(next)", icon: "arrow.triangle.2.circlepath", isEnabled: true, action: onPairNextRound)
                 Button(action: onViewPairings) {
                     Text("View Pairings")
-                        .font(.headline)
+                        .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
+                        .padding(.vertical, 12)
                 }
-                .foregroundStyle(.white)
-                .background(Color.podiumCopper)
-                .clipShape(Capsule())
+                .foregroundStyle(Color.podiumCopper)
+                .overlay(Capsule().stroke(Color.podiumCopper.opacity(0.6), lineWidth: 1))
+            } else {
+                primaryButton("View Pairings", icon: nil, isEnabled: true, action: onViewPairings)
             }
         }
+    }
+
+    private func primaryButton(_ title: String, icon: String?, isEnabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Group {
+                if let icon { Label(title, systemImage: icon) } else { Text(title) }
+            }
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+        }
+        .foregroundStyle(.white)
+        .background(isEnabled ? Color.podiumCopper : Color.podiumCopper.opacity(0.4))
+        .clipShape(Capsule())
+        .disabled(!isEnabled)
     }
 
     private func infoRow(icon: String, label: String, value: String) -> some View {

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TournamentStandingsTabView: View {
     let standings: [TiebreakCalculator.Standing]
+    var isSwiss = false
     @Binding var selectedPlayer: Player?
 
     var body: some View {
@@ -38,7 +39,9 @@ struct TournamentStandingsTabView: View {
                 Text(standing.player.name)
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                Text("SB \(standing.sonnebornBerger.scoreText) · Koya \(standing.koya.scoreText) · \(standing.wins)W")
+                Text(isSwiss
+                     ? "Buchholz \(standing.buchholz.scoreText) · SB \(standing.sonnebornBerger.scoreText) · \(standing.wins)W"
+                     : "SB \(standing.sonnebornBerger.scoreText) · Koya \(standing.koya.scoreText) · \(standing.wins)W")
                     .font(.caption2)
                     .foregroundStyle(Color.podiumMuted)
                     .lineLimit(1)

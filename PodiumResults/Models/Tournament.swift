@@ -15,6 +15,7 @@ final class Tournament {
     var arbiter: String = ""
     var categories: String = ""
     var publishedAt: Date?
+    var totalRounds: Int = 0
 
     @Relationship(deleteRule: .cascade, inverse: \Player.tournament)
     var players: [Player] = []
@@ -23,7 +24,8 @@ final class Tournament {
     var matches: [Match] = []
 
     init(name: String, format: String = "Round Robin", date: Date = .now, isFinished: Bool = false,
-         location: String = "", timeControl: String = "", arbiter: String = "", categories: String = "") {
+         location: String = "", timeControl: String = "", arbiter: String = "", categories: String = "",
+         totalRounds: Int = 0) {
         self.id = UUID()
         self.name = name
         self.format = format
@@ -34,6 +36,7 @@ final class Tournament {
         self.timeControl = timeControl
         self.arbiter = arbiter
         self.categories = categories
+        self.totalRounds = totalRounds
     }
 }
 
@@ -44,12 +47,35 @@ extension Tournament {
         return Double(done) / Double(matches.count)
     }
 
+    var isSwiss: Bool { format == "Swiss" }
+
+    var latestRound: Int { matches.map(\.round).max() ?? 0 }
+
+    private var playedGames: [Match] { matches.filter { $0.player2 != nil } }
+
+    func isRoundComplete(_ round: Int) -> Bool {
+        playedGames.filter { $0.round == round }.allSatisfy(\.isComplete)
+    }
+
+    // en suizo la siguiente ronda se empareja hasta que termina la anterior
+    var nextSwissRound: Int? {
+        guard isSwiss, !matches.isEmpty, latestRound < totalRounds, isRoundComplete(latestRound) else { return nil }
+        return latestRound + 1
+    }
+
+    var acceptsPlayers: Bool {
+        status != .finished && (!isSwiss || matches.isEmpty || latestRound < totalRounds)
+    }
+
     // live solo cuenta si ya se jugo algo, tener el calendario generado no es lo mismo que haber empezado
     var status: TournamentStatus {
         if matches.isEmpty { return .upcoming }
-        let completed = matches.filter(\.isComplete).count
+        let games = playedGames
+        let completed = games.filter(\.isComplete).count
         if completed == 0 { return .upcoming }
-        return completed >= matches.count ? .finished : .live
+        let allDone = completed >= games.count
+        if isSwiss { return allDone && latestRound >= totalRounds ? .finished : .live }
+        return allDone ? .finished : .live
     }
 }
 

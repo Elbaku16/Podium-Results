@@ -4,13 +4,16 @@ import SwiftData
 struct TournamentDetailViewModel {
     private let modelContext: ModelContext
     private let pairingService: PairingServiceProtocol
+    private let swissService: SwissPairingServiceProtocol
     private let notifier: NotificationServiceProtocol
 
     init(modelContext: ModelContext,
          pairingService: PairingServiceProtocol = RoundRobinPairingService(),
+         swissService: SwissPairingServiceProtocol = SwissPairingService(),
          notifier: NotificationServiceProtocol = LocalNotificationService()) {
         self.modelContext = modelContext
         self.pairingService = pairingService
+        self.swissService = swissService
         self.notifier = notifier
     }
 
@@ -20,20 +23,49 @@ struct TournamentDetailViewModel {
     }
 
     func generateSchedule(for tournament: Tournament) {
-        createMatches(for: tournament, players: tournament.players)
+        if tournament.isSwiss {
+            createSwissRound(1, for: tournament)
+        } else {
+            createMatches(for: tournament, players: tournament.players)
+        }
+    }
+
+    func pairNextRound(for tournament: Tournament) {
+        guard let round = tournament.nextSwissRound else { return }
+        createSwissRound(round, for: tournament)
+    }
+
+    private func createSwissRound(_ round: Int, for tournament: Tournament) {
+        let pairings = swissService.pairRound(round, players: tournament.players, matches: tournament.matches)
+        for (index, pairing) in pairings.enumerated() {
+            if let player2 = pairing.player2 {
+                let match = Match(round: round, player1: pairing.player1, player2: player2, board: index + 1)
+                match.tournament = tournament
+                modelContext.insert(match)
+            } else {
+                let match = Match(round: round, player1: pairing.player1, player2: nil,
+                                   score1: 1, score2: 0, isComplete: true, board: 999)
+                match.tournament = tournament
+                modelContext.insert(match)
+                pairing.player1.score += 1
+            }
+        }
     }
 
     private func createMatches(for tournament: Tournament, players: [Player]) {
         let pairings = pairingService.generateSchedule(for: players)
+        var boardsUsed: [Int: Int] = [:]
 
         for pairing in pairings {
             if let player2 = pairing.player2 {
-                let match = Match(round: pairing.round, player1: pairing.player1, player2: player2)
+                boardsUsed[pairing.round, default: 0] += 1
+                let match = Match(round: pairing.round, player1: pairing.player1, player2: player2,
+                                  board: boardsUsed[pairing.round] ?? 0)
                 match.tournament = tournament
                 modelContext.insert(match)
             } else {
                 let match = Match(round: pairing.round, player1: pairing.player1, player2: nil,
-                                   score1: 1, score2: 0, isComplete: true)
+                                   score1: 1, score2: 0, isComplete: true, board: 999)
                 match.tournament = tournament
                 modelContext.insert(match)
                 pairing.player1.score += 1
@@ -44,17 +76,17 @@ struct TournamentDetailViewModel {
     func entryRound(for tournament: Tournament) -> Int? {
         let played = tournament.matches.filter { $0.isComplete && $0.player2 != nil }
         guard let lastPlayed = played.map(\.round).max() else { return nil }
-        return lastPlayed + 1
+        return tournament.isSwiss ? tournament.latestRound + 1 : lastPlayed + 1
     }
 
     @discardableResult
     func addPlayer(named name: String, to tournament: Tournament, missedRoundPoints: Double = 0) -> Bool {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let isDuplicate = tournament.players.contains { $0.name.lowercased() == trimmed.lowercased() }
-        guard !trimmed.isEmpty, !isDuplicate, tournament.status != .finished else { return false }
+        guard !trimmed.isEmpty, !isDuplicate, tournament.acceptsPlayers else { return false }
 
         let current = tournament.players
-        let player = Player(name: trimmed)
+        let player = Player(name: trimmed, seed: (current.map(\.seed).max() ?? -1) + 1)
         player.tournament = tournament
         modelContext.insert(player)
 
@@ -63,14 +95,30 @@ struct TournamentDetailViewModel {
         notify("New player", "\(trimmed) joined \(tournament.name).", icon: "person.badge.plus")
 
         guard let firstRound = entryRound(for: tournament) else {
-            tournament.matches.forEach(modelContext.delete)
+            let oldMatches = tournament.matches
+            tournament.matches.removeAll()
+            oldMatches.forEach(modelContext.delete)
             (current + [player]).forEach { $0.score = 0 }
-            createMatches(for: tournament, players: current + [player])
+            if tournament.isSwiss {
+                createSwissRound(1, for: tournament)
+            } else {
+                createMatches(for: tournament, players: current + [player])
+            }
+            return true
+        }
+
+        if tournament.isSwiss {
+            for round in 1..<firstRound {
+                let missed = Match(round: round, player1: player, player2: nil, score1: missedRoundPoints, score2: 0, isComplete: true, board: 999)
+                missed.tournament = tournament
+                modelContext.insert(missed)
+                player.score += missedRoundPoints
+            }
             return true
         }
 
         for round in 1..<firstRound {
-            let missed = Match(round: round, player1: player, player2: nil, score1: missedRoundPoints, score2: 0, isComplete: true)
+            let missed = Match(round: round, player1: player, player2: nil, score1: missedRoundPoints, score2: 0, isComplete: true, board: 999)
             missed.tournament = tournament
             modelContext.insert(missed)
             player.score += missedRoundPoints
@@ -119,7 +167,7 @@ struct TournamentDetailViewModel {
             game.player2 = player
             met.insert(opponent.id)
 
-            let rest = Match(round: round, player1: resting, player2: nil, score1: 1, score2: 0, isComplete: true)
+            let rest = Match(round: round, player1: resting, player2: nil, score1: 1, score2: 0, isComplete: true, board: 999)
             rest.tournament = tournament
             modelContext.insert(rest)
             resting.score += 1
@@ -148,7 +196,8 @@ struct TournamentDetailViewModel {
         }
         let roundDone = tournament.matches.filter { $0.round == match.round }.allSatisfy(\.isComplete)
         if roundDone {
-            notify("Round \(match.round) complete", "All games of round \(match.round) in \(tournament.name) are finished.",
+            let next = tournament.nextSwissRound.map { " Round \($0) is ready to pair." } ?? ""
+            notify("Round \(match.round) complete", "All games of round \(match.round) in \(tournament.name) are finished.\(next)",
                    icon: "checkmark.seal.fill")
         }
     }

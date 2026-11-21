@@ -71,6 +71,12 @@ struct TournamentDetailView: View {
                                 rounds: rounds,
                                 currentRound: currentRound,
                                 onGenerateSchedule: { viewModel.generateSchedule(for: tournament) },
+                                onPairNextRound: {
+                                    viewModel.pairNextRound(for: tournament)
+                                    selectedRound = nil
+                                    selectedTab = .pairings
+                                    Task { await publishViewModel.refreshIfPublished(tournament, user: auth.user) }
+                                },
                                 onViewPairings: { selectedTab = .pairings },
                                 onAddPlayer: { isShowingAddPlayer = true },
                                 publishState: publishViewModel.state,
@@ -88,7 +94,7 @@ struct TournamentDetailView: View {
                                 matchBeingScored: $matchBeingScored
                             )
                         case .standings:
-                            TournamentStandingsTabView(standings: standings, selectedPlayer: $selectedPlayer)
+                            TournamentStandingsTabView(standings: standings, isSwiss: tournament.isSwiss, selectedPlayer: $selectedPlayer)
                         }
                     }
                     .padding(16)

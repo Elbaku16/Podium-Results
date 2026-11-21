@@ -10,7 +10,10 @@ struct TournamentPairingsTabView: View {
     private var roundMatches: [Match] {
         tournament.matches
             .filter { $0.round == currentRound }
-            .sorted { ($0.player1?.name ?? "") < ($1.player1?.name ?? "") }
+            .sorted {
+                if $0.board != $1.board { return $0.board < $1.board }
+                return ($0.player1?.name ?? "") < ($1.player1?.name ?? "")
+            }
     }
 
     var body: some View {

@@ -11,6 +11,7 @@ struct FirestoreTournamentService: TournamentPublishServiceProtocol {
                 "points": $0.score,
                 "sonnebornBerger": $0.sonnebornBerger,
                 "koya": $0.koya,
+                "buchholz": $0.buchholz,
                 "wins": $0.wins,
             ] as [String: Any]
         }
@@ -33,6 +34,7 @@ struct FirestoreTournamentService: TournamentPublishServiceProtocol {
         let data: [String: Any] = [
             "name": tournament.name,
             "format": tournament.format,
+            "totalRounds": tournament.totalRounds,
             "date": Timestamp(date: tournament.date),
             "location": tournament.location,
             "timeControl": tournament.timeControl,

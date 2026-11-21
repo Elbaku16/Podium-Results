@@ -6,6 +6,7 @@ enum TiebreakCalculator {
         let score: Double
         let sonnebornBerger: Double
         let koya: Double
+        let buchholz: Double
         let wins: Int
         var id: UUID { player.id }
     }
@@ -15,7 +16,7 @@ enum TiebreakCalculator {
         let pointsEarned: Double
     }
 
-    // orden oficial FIDE C.07 pa round robin: direct encounter, koya, sonneborn-berger, ganadas
+    // round robin (FIDE C.07): direct encounter, koya, sonneborn-berger, ganadas. suizo: direct encounter, buchholz, sonneborn-berger, ganadas
     static func standings(for tournament: Tournament) -> [Standing] {
         let players = tournament.players
         let completed = tournament.matches.filter { $0.isComplete && $0.player2 != nil }
@@ -48,6 +49,10 @@ enum TiebreakCalculator {
                 .reduce(0) { $0 + $1.pointsEarned }
         }
 
+        func buchholz(_ player: Player) -> Double {
+            played(by: player).reduce(0) { $0 + $1.opponent.score }
+        }
+
         func wins(_ player: Player) -> Int {
             played(by: player).filter { $0.pointsEarned == 1 }.count
         }
@@ -64,13 +69,17 @@ enum TiebreakCalculator {
             .map { player in
                 Standing(player: player, score: player.score,
                          sonnebornBerger: sonnebornBerger(player),
-                         koya: koya(player), wins: wins(player))
+                         koya: koya(player), buchholz: buchholz(player), wins: wins(player))
             }
             .sorted { a, b in
                 if a.score != b.score { return a.score > b.score }
                 let deA = directEncounter(a.player), deB = directEncounter(b.player)
                 if deA != deB { return deA > deB }
-                if a.koya != b.koya { return a.koya > b.koya }
+                if tournament.isSwiss {
+                    if a.buchholz != b.buchholz { return a.buchholz > b.buchholz }
+                } else if a.koya != b.koya {
+                    return a.koya > b.koya
+                }
                 if a.sonnebornBerger != b.sonnebornBerger { return a.sonnebornBerger > b.sonnebornBerger }
                 if a.wins != b.wins { return a.wins > b.wins }
                 return a.player.name < b.player.name

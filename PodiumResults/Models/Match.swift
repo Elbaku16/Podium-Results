@@ -8,12 +8,13 @@ final class Match {
     var score1: Double
     var score2: Double
     var isComplete: Bool
+    var board: Int = 0
 
     var tournament: Tournament?
     var player1: Player?
     var player2: Player?
 
-    init(round: Int, player1: Player, player2: Player?, score1: Double = 0, score2: Double = 0, isComplete: Bool = false) {
+    init(round: Int, player1: Player, player2: Player?, score1: Double = 0, score2: Double = 0, isComplete: Bool = false, board: Int = 0) {
         self.id = UUID()
         self.round = round
         self.player1 = player1
@@ -21,6 +22,7 @@ final class Match {
         self.score1 = score1
         self.score2 = score2
         self.isComplete = isComplete
+        self.board = board
     }
 }
 

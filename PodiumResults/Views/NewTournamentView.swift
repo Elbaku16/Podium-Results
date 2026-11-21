@@ -10,12 +10,18 @@ struct NewTournamentView: View {
     @State private var timeControl = ""
     @State private var arbiter = ""
     @State private var categories = ""
+    @State private var format = "Round Robin"
+    @State private var swissRounds = 5
     @State private var playerNames: [String] = []
     @State private var newPlayerName = ""
     @FocusState private var isPlayerFieldFocused: Bool
 
+    private var swissNeedsMorePlayers: Bool {
+        format == "Swiss" && swissRounds >= playerNames.count
+    }
+
     private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && playerNames.count >= 2
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && playerNames.count >= 2 && !swissNeedsMorePlayers
     }
 
     var body: some View {
@@ -49,12 +55,22 @@ struct NewTournamentView: View {
                                 .textFieldStyle(.plain)
                                 .foregroundStyle(.white)
                             Divider().overlay(.white.opacity(0.07))
-                            HStack {
+                            VStack(alignment: .leading, spacing: 10) {
                                 Text("Format")
                                     .foregroundStyle(.white)
-                                Spacer()
-                                Text("Round Robin")
-                                    .foregroundStyle(Color.podiumMuted)
+                                Picker("Format", selection: $format) {
+                                    Text("Round Robin").tag("Round Robin")
+                                    Text("Swiss").tag("Swiss")
+                                }
+                                .pickerStyle(.segmented)
+                                .environment(\.colorScheme, .dark)
+                            }
+                            if format == "Swiss" {
+                                Divider().overlay(.white.opacity(0.07))
+                                Stepper(value: $swissRounds, in: 2...9) {
+                                    Text("Rounds: \(swissRounds)")
+                                        .foregroundStyle(.white)
+                                }
                             }
                         }
                         .cardBackground(Color.white.opacity(0.06))
@@ -103,6 +119,12 @@ struct NewTournamentView: View {
                         }
                         .cardBackground(Color.white.opacity(0.06))
 
+                        if swissNeedsMorePlayers && playerNames.count >= 2 {
+                            Text("A Swiss tournament needs more players than rounds, so nobody plays the same opponent twice.")
+                                .font(.caption)
+                                .foregroundStyle(Color.podiumCopper)
+                        }
+
                         if playerNames.count < 2 {
                             Text("Add at least 2 players to save the tournament.")
                                 .font(.caption)
@@ -144,13 +166,15 @@ struct NewTournamentView: View {
 
     private func saveTournament() {
         let tournament = Tournament(name: name.trimmingCharacters(in: .whitespaces),
+                                     format: format,
                                      location: location.trimmingCharacters(in: .whitespaces),
                                      timeControl: timeControl.trimmingCharacters(in: .whitespaces),
                                      arbiter: arbiter.trimmingCharacters(in: .whitespaces),
-                                     categories: categories.trimmingCharacters(in: .whitespaces))
+                                     categories: categories.trimmingCharacters(in: .whitespaces),
+                                     totalRounds: format == "Swiss" ? swissRounds : 0)
         modelContext.insert(tournament)
-        for playerName in playerNames {
-            let player = Player(name: playerName)
+        for (index, playerName) in playerNames.enumerated() {
+            let player = Player(name: playerName, seed: index)
             player.tournament = tournament
             modelContext.insert(player)
         }

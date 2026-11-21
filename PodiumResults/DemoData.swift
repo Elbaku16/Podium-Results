@@ -20,6 +20,9 @@ private struct SeededRandom {
 }
 
 enum DemoData {
+    // rondas ya jugadas en cetis 25, la siguiente queda sin emparejar pa enseñar el boton
+    private static let cetisRoundsPlayed = 4
+
     static func reset(in context: ModelContext) {
         try? context.delete(model: Tournament.self)
         try? context.delete(model: AppNotification.self)
@@ -28,14 +31,15 @@ enum DemoData {
         var random = SeededRandom(seed: 25)
 
         let test = makeTournament(
-            "Test Tournament", date: day(18), location: "", timeControl: "10 min + 5 sec",
-            players: [("Ana", 1750), ("Beto", 1620), ("Carla", 1580), ("Diego", 1490)], in: context
+            "Test Tournament", format: "Round Robin", rounds: 0, date: day(18), location: "", timeControl: "10 min + 5 sec",
+            players: [("Ana", 1750), ("Beto", 1620), ("Carla", 1580), ("Diego", 1490), ("Elena", 1450), ("Fabi\u{00E1}n", 1400)],
+            in: context
         )
         silent.generateSchedule(for: test)
-        play(test, rounds: 1...3, extraGames: 0, with: silent, random: &random)
+        for round in 1...5 { play(test, round: round, with: silent, random: &random) }
 
         let cetis = makeTournament(
-            "Tournament Cetis 25", date: day(20), location: "CETIS 25", timeControl: "15 min + 10 sec",
+            "Tournament Cetis 25", format: "Swiss", rounds: 5, date: day(20), location: "CETIS 25", timeControl: "15 min + 10 sec",
             players: [
                 ("Ana Torres", 1820), ("Luis Ram\u{00ED}rez", 1760), ("Carla Mendoza", 1710), ("Diego Herrera", 1690),
                 ("Sof\u{00ED}a Vargas", 1640), ("Mateo Cruz", 1600), ("Valeria Ortiz", 1570), ("Emilio Salazar", 1540),
@@ -44,7 +48,10 @@ enum DemoData {
             ], in: context
         )
         silent.generateSchedule(for: cetis)
-        play(cetis, rounds: 1...7, extraGames: 3, with: silent, random: &random)
+        for round in 1...cetisRoundsPlayed {
+            play(cetis, round: round, with: silent, random: &random)
+            if round < cetisRoundsPlayed { silent.pairNextRound(for: cetis) }
+        }
 
         try? context.save()
         let generated = (try? context.fetch(FetchDescriptor<AppNotification>())) ?? []
@@ -56,13 +63,13 @@ enum DemoData {
         Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: number, hour: 9)) ?? .now
     }
 
-    private static func makeTournament(_ name: String, date: Date, location: String, timeControl: String,
-                                       players: [(String, Int)], in context: ModelContext) -> Tournament {
-        let tournament = Tournament(name: name, date: date, location: location, timeControl: timeControl,
-                                    arbiter: "Lenin Cortez", categories: "Open")
+    private static func makeTournament(_ name: String, format: String, rounds: Int, date: Date, location: String,
+                                       timeControl: String, players: [(String, Int)], in context: ModelContext) -> Tournament {
+        let tournament = Tournament(name: name, format: format, date: date, location: location, timeControl: timeControl,
+                                    arbiter: "Lenin Cortez", categories: "Open", totalRounds: rounds)
         context.insert(tournament)
-        for (playerName, _) in players {
-            let player = Player(name: playerName)
+        for (index, (playerName, _)) in players.enumerated() {
+            let player = Player(name: playerName, seed: index)
             player.tournament = tournament
             context.insert(player)
         }
@@ -72,14 +79,10 @@ enum DemoData {
 
     private static var ratings: [String: [String: Int]] = [:]
 
-    private static func play(_ tournament: Tournament, rounds: ClosedRange<Int>, extraGames: Int,
+    private static func play(_ tournament: Tournament, round: Int,
                              with viewModel: TournamentDetailViewModel, random: inout SeededRandom) {
         let table = ratings[tournament.name] ?? [:]
-        var games = tournament.matches
-            .filter { rounds.contains($0.round) && $0.player2 != nil }
-            .sorted { $0.round < $1.round }
-        let nextRound = (rounds.upperBound + 1)
-        games += tournament.matches.filter { $0.round == nextRound && $0.player2 != nil }.prefix(extraGames)
+        let games = tournament.matches.filter { $0.round == round && $0.player2 != nil && !$0.isComplete }
 
         for match in games {
             guard let white = match.player1, let black = match.player2 else { continue }
