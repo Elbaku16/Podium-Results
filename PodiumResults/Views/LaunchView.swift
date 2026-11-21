@@ -8,7 +8,7 @@ struct LaunchView: View {
             Color.podiumCharcoal.ignoresSafeArea()
 
             VStack(spacing: 18) {
-                BrandLogo(width: 190)
+                BrandLogo(width: 200)
                     .scaleEffect(isShown ? 1 : 0.85)
                     .opacity(isShown ? 1 : 0)
 

@@ -3,8 +3,8 @@ import SwiftUI
 struct BrandLogo: View {
     var width: CGFloat = 160
 
-    private let gold = Color(red: 233 / 255, green: 194 / 255, blue: 129 / 255)
-    private let copper = Color(red: 201 / 255, green: 130 / 255, blue: 91 / 255)
+    private let gold = Color(red: 231 / 255, green: 191 / 255, blue: 129 / 255)
+    private let copper = Color(red: 190 / 255, green: 120 / 255, blue: 58 / 255)
 
     var body: some View {
         VStack(spacing: 6) {
