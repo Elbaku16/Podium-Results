@@ -42,7 +42,7 @@ struct ProfileAvatarView: View {
             guard let item else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {
-                    photo.setPhoto(data)
+                    await photo.setPhoto(data)
                 }
                 pickedItem = nil
             }

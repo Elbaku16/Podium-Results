@@ -10,12 +10,18 @@ final class ProfilePhotoViewModel {
     var image: UIImage?
 
     func load(for uid: String?) {
-        key = uid ?? "guest"
-        image = store.load(for: key)
+        let newKey = uid ?? "guest"
+        key = newKey
+        Task {
+            let loaded = await Task.detached { ProfilePhotoStore().load(for: newKey) }.value
+            if key == newKey { image = loaded }
+        }
     }
 
-    func setPhoto(_ data: Data) {
-        image = store.save(data, for: key)
+    func setPhoto(_ data: Data) async {
+        let current = key
+        let saved = await Task.detached { ProfilePhotoStore().save(data, for: current) }.value
+        if key == current { image = saved }
     }
 
     func removePhoto() {
