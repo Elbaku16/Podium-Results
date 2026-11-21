@@ -3,31 +3,35 @@ import SwiftUI
 struct HelpSupportView: View {
     private let questions: [(String, String)] = [
         ("How do I create a tournament?",
-         "Tap + on Home or Tournaments, write a name, add at least two players and save. Then open the tournament and tap Generate Schedule."),
+         "Tap + on Home or Tournaments, enter a name, add at least two players and tap Save. Then open the tournament and select Generate Schedule to create the rounds."),
         ("How are the pairings made?",
-         "The tournament is round robin: everybody plays everybody once. If the number of players is odd, one player rests each round and gets a bye."),
-        ("How do I enter or fix a result?",
-         "Open the Pairings tab and tap a game. Pick who won or a draw. If you made a mistake, tap the game again and change it. The points are updated."),
-        ("What if a player arrives late?",
-         "Tap Add Player. He joins in the next round and the rounds already played don't change. For the rounds he missed he gets half a point or no points, you choose."),
-        ("How do the standings break ties?",
-         "By direct encounter, then Koya, then Sonneborn-Berger, then number of wins."),
-        ("What does Publish Online do?",
-         "It saves a copy of the tournament online so others can follow it. It updates by itself when you save results. You can remove it anytime with Remove from Online."),
+         "Tournaments use the round robin format, where every player plays every other player once. When the number of players is odd, one player rests each round and receives a bye."),
+        ("How do I enter or change a result?",
+         "Open the Pairings tab and select a game, then choose a win for either player or a draw. To change a result, select the game again and update it. The standings update automatically."),
+        ("Can I add a player after the tournament has started?",
+         "Yes. Select Add Player in the Information tab. The player joins in the next round, and rounds already played are not changed. For each round missed, the player receives half a point or no points, depending on your Preferences."),
+        ("How are ties broken in the standings?",
+         "Players with the same score are ranked by direct encounter, then Koya, then Sonneborn-Berger, then number of wins."),
+        ("How do I share a tournament online?",
+         "Select Publish Online in the Information tab to save a copy that others can follow. The copy updates when results change. Select Remove from Online at any time to delete it."),
+        ("How do I turn on notifications?",
+         "Go to Profile, then Preferences, and turn on Phone alerts. You will be notified when a round or a tournament ends."),
+        ("How do I delete my account?",
+         "Go to Profile, then Personal Information, and select Delete Account. Your account and your online tournaments are deleted. Tournaments saved on your device are not affected."),
     ]
 
     @State private var openIndex: Int?
 
     var body: some View {
         SettingsScreen(title: "Help & Support") {
-            SettingsGroup(title: "Common questions") {
+            SettingsGroup(title: "Frequently asked questions") {
                 ForEach(Array(questions.enumerated()), id: \.offset) { index, item in
                     question(index: index, title: item.0, answer: item.1)
                     if index != questions.count - 1 { SettingsDivider(inset: 0) }
                 }
             }
 
-            SettingsGroup(title: "Need more help?", footer: "Opens the project page on GitHub. You need a GitHub account to write there.") {
+            SettingsGroup(title: "Contact", footer: "Opens the project page on GitHub.") {
                 Link(destination: URL(string: "https://github.com/Elbaku16/Podium-Results/issues")!) {
                     HStack(spacing: 12) {
                         SettingsIcon(name: "exclamationmark.bubble.fill")

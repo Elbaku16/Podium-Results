@@ -82,11 +82,11 @@ struct ProfileView: View {
     private var topBar: some View {
         HStack {
             HStack(spacing: 10) {
-                Image("PodiumMark")
+                Image("BrandMark")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 30, height: 32)
-                Text("PODIUM\nRESULTS")
+                Text("\(AppInfo.firstWord.uppercased())\n\(AppInfo.secondWord.uppercased())")
                     .font(.caption.weight(.bold))
                     .tracking(1.5)
                     .foregroundStyle(Color.podiumBeige)
@@ -119,11 +119,11 @@ struct ProfileView: View {
 
     private var statsCard: some View {
         HStack(spacing: 0) {
-            statTile(icon: "trophy.fill", value: tournaments.count, label: "Tournaments")
+            statTile(value: tournaments.count, label: "Tournaments")
             statDivider
-            statTile(icon: "square.grid.3x3.fill", value: totalMatchesPlayed, label: "Matches Played")
+            statTile(value: totalMatchesPlayed, label: "Games Played")
             statDivider
-            statTile(icon: "person.2.fill", value: distinctPlayerCount, label: "Unique Players")
+            statTile(value: distinctPlayerCount, label: "Players")
         }
         .padding(.vertical, 16)
         .profileCard()
@@ -135,16 +135,14 @@ struct ProfileView: View {
             .frame(width: 1, height: 52)
     }
 
-    private func statTile(icon: String, value: Int, label: String) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.subheadline)
-                .foregroundStyle(Color.podiumCopper)
+    private func statTile(value: Int, label: String) -> some View {
+        VStack(spacing: 4) {
             Text("\(value)")
-                .font(.title2.weight(.bold))
+                .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
-            Text(label)
-                .font(.caption)
+            Text(label.uppercased())
+                .font(.caption2.weight(.semibold))
+                .tracking(0.8)
                 .foregroundStyle(Color.podiumMuted)
                 .multilineTextAlignment(.center)
         }

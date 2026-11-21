@@ -11,10 +11,7 @@ struct AboutView: View {
     var body: some View {
         SettingsScreen(title: "About") {
             VStack(spacing: 10) {
-                Image("PodiumLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 130)
+                BrandLogo(width: 150)
                 Text("Version \(version)")
                     .font(.footnote)
                     .foregroundStyle(Color.podiumMuted)

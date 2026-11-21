@@ -26,6 +26,7 @@ struct PodiumResultsApp: App {
                 }
             }
             .environment(authViewModel)
+            .seedDemoDataIfRequested()
             .task {
                 try? await Task.sleep(for: .seconds(1.6))
                 withAnimation(.easeInOut(duration: 0.5)) { showLaunch = false }

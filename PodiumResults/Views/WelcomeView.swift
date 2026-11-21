@@ -26,10 +26,7 @@ struct WelcomeView: View {
                 VStack(spacing: 22) {
                     Spacer(minLength: 40)
 
-                    Image("PodiumLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 150)
+                    BrandLogo(width: 140)
 
                     Text("More than tournaments. A global chess community.")
                         .font(.subheadline)

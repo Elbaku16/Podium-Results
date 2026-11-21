@@ -22,7 +22,7 @@ struct ProfileSettingsCard: View {
             SettingsDivider()
             row(.help, icon: "questionmark.circle", title: "Help & Support")
             SettingsDivider()
-            row(.about, icon: "info.circle", title: "About Podium Results")
+            row(.about, icon: "info.circle", title: "About \(AppInfo.name)")
         }
         .padding(16)
         .profileCard()
