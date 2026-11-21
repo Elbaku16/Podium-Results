@@ -63,8 +63,9 @@ extension Tournament {
         return latestRound + 1
     }
 
+    // fide: en suizo solo se puede entrar hasta la ronda 3
     var acceptsPlayers: Bool {
-        status != .finished && (!isSwiss || matches.isEmpty || latestRound < totalRounds)
+        status != .finished && (!isSwiss || matches.isEmpty || latestRound < min(3, totalRounds))
     }
 
     // live solo cuenta si ya se jugo algo, tener el calendario generado no es lo mismo que haber empezado
