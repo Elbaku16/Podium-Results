@@ -11,6 +11,7 @@ struct TournamentInfoTabView: View {
     let publishState: PublishViewModel.State
     let onPublish: () -> Void
     let onUnpublish: () -> Void
+    let onExport: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -20,6 +21,17 @@ struct TournamentInfoTabView: View {
             infoCard
             actionButton
             publishSection
+            if !tournament.matches.isEmpty {
+                Button(action: onExport) {
+                    Label("Export Results (PDF)", systemImage: "square.and.arrow.up")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .foregroundStyle(.white)
+                .background(Color.white.opacity(0.1))
+                .clipShape(Capsule())
+            }
             if tournament.acceptsPlayers {
                 Button(action: onAddPlayer) {
                     Label("Add Player", systemImage: "person.badge.plus")

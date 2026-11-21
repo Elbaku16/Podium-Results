@@ -14,6 +14,8 @@ struct HelpSupportView: View {
          "Players with the same score are ranked by direct encounter. In round robin, then Koya, Sonneborn-Berger and wins. In Swiss, then Buchholz, Sonneborn-Berger and wins."),
         ("How do I share a tournament online?",
          "Select Publish Online in the Information tab to save a copy that others can follow. The copy updates when results change. Select Remove from Online at any time to delete it."),
+        ("How do I export the results?",
+         "Open the Information tab and select Export Results (PDF). The file includes the standings and the pairings of every round. You can save it, print it or send it to other people."),
         ("How do I turn on notifications?",
          "Go to Profile, then Preferences, and turn on Phone alerts. You will be notified when a round or a tournament ends."),
         ("How do I delete my account?",

@@ -11,6 +11,8 @@ struct TournamentDetailView: View {
     @State private var isShowingAddPlayer = false
     @State private var publishViewModel = PublishViewModel()
     @State private var isConfirmingUnpublish = false
+    @State private var exportedFile: ExportedFile?
+    @State private var exportError = false
     @Environment(AuthViewModel.self) private var auth
     @State private var selectedTab: DetailTab
 
@@ -83,7 +85,8 @@ struct TournamentDetailView: View {
                                 onPublish: {
                                     Task { await publishViewModel.publish(tournament, user: auth.user) }
                                 },
-                                onUnpublish: { isConfirmingUnpublish = true }
+                                onUnpublish: { isConfirmingUnpublish = true },
+                                onExport: { exportResults() }
                             )
                         case .pairings:
                             TournamentPairingsTabView(
@@ -126,6 +129,15 @@ struct TournamentDetailView: View {
         } message: {
             Text("It stays on your phone. Only the online copy is deleted.")
         }
+        .sheet(item: $exportedFile) { file in
+            ShareSheet(url: file.url)
+                .presentationDetents([.medium, .large])
+        }
+        .alert("Couldn't export", isPresented: $exportError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("The PDF could not be created. Try again.")
+        }
         .sheet(isPresented: $isShowingAddPlayer) {
             AddPlayerView(
                 existingNames: tournament.players.map(\.name),
@@ -138,6 +150,15 @@ struct TournamentDetailView: View {
         }
         .sheet(item: $selectedPlayer) { player in
             PlayerProfileView(player: player, tournament: tournament)
+        }
+    }
+
+    private func exportResults() {
+        do {
+            let url = try ResultsPDFService().makePDF(for: tournament)
+            exportedFile = ExportedFile(url: url)
+        } catch {
+            exportError = true
         }
     }
 
