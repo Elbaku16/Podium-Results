@@ -94,7 +94,13 @@ struct TournamentDetailView: View {
                                 rounds: rounds,
                                 selectedRound: $selectedRound,
                                 currentRound: currentRound,
-                                matchBeingScored: $matchBeingScored
+                                matchBeingScored: $matchBeingScored,
+                                onPairNextRound: {
+                                    viewModel.pairNextRound(for: tournament)
+                                    selectedRound = nil
+                                    Task { await publishViewModel.refreshIfPublished(tournament, user: auth.user) }
+                                },
+                                onExport: { exportResults() }
                             )
                         case .standings:
                             TournamentStandingsTabView(standings: standings, isSwiss: tournament.isSwiss, selectedPlayer: $selectedPlayer)

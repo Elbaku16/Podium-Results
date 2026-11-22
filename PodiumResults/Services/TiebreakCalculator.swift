@@ -16,7 +16,7 @@ enum TiebreakCalculator {
         let pointsEarned: Double
     }
 
-    // round robin (FIDE C.07): direct encounter, koya, sonneborn-berger, ganadas. suizo: direct encounter, buchholz, sonneborn-berger, ganadas
+    // round robin: direct encounter, koya, sonneborn-berger, ganadas. suizo: direct encounter, buchholz, sonneborn-berger, ganadas
     static func standings(for tournament: Tournament) -> [Standing] {
         let players = tournament.players
         let completed = tournament.matches.filter { $0.isComplete && $0.player2 != nil }
@@ -57,33 +57,64 @@ enum TiebreakCalculator {
             played(by: player).filter { $0.pointsEarned == 1 }.count
         }
 
-        let groupedByScore = Dictionary(grouping: players, by: \.score)
-        func directEncounter(_ player: Player) -> Double {
-            let tiedGroup = Set((groupedByScore[player.score] ?? []).map(\.id))
-            return played(by: player)
-                .filter { tiedGroup.contains($0.opponent.id) }
-                .reduce(0) { $0 + $1.pointsEarned }
+        let standings = players.map { player in
+            Standing(player: player, score: player.score,
+                     sonnebornBerger: sonnebornBerger(player),
+                     koya: koya(player), buchholz: buchholz(player), wins: wins(player))
         }
 
-        return players
-            .map { player in
-                Standing(player: player, score: player.score,
-                         sonnebornBerger: sonnebornBerger(player),
-                         koya: koya(player), buchholz: buchholz(player), wins: wins(player))
-            }
-            .sorted { a, b in
-                if a.score != b.score { return a.score > b.score }
-                let deA = directEncounter(a.player), deB = directEncounter(b.player)
-                if deA != deB { return deA > deB }
-                if tournament.isSwiss {
-                    if a.buchholz != b.buchholz { return a.buchholz > b.buchholz }
-                } else if a.koya != b.koya {
-                    return a.koya > b.koya
+        // fide 2026 (play-off and tie-break regulations), art. 6: el encuentro directo solo cuenta entre los empatados
+        func directScores(in group: [Standing]) -> [UUID: Double] {
+            let ids = Set(group.map(\.id))
+            return Dictionary(uniqueKeysWithValues: group.map { standing in
+                (standing.id, played(by: standing.player).filter { ids.contains($0.opponent.id) }.reduce(0) { $0 + $1.pointsEarned })
+            })
+        }
+
+        func opponentsMet(_ standing: Standing, in group: [Standing]) -> Int {
+            let ids = Set(group.map(\.id))
+            return Set(played(by: standing.player).map(\.opponent.id).filter { ids.contains($0) }).count
+        }
+
+        func directEncounter(_ group: [Standing], then rest: [(Standing) -> Double]) -> [Standing] {
+            let scores = directScores(in: group)
+            let allMet = group.allSatisfy { opponentsMet($0, in: group) == group.count - 1 }
+
+            if allMet {
+                // art. 6.2: todos se enfrentaron, el mini-ranking decide y los que sigan empatados repiten el desempate
+                let values = Set(scores.values).sorted(by: >)
+                return values.flatMap { value -> [Standing] in
+                    let bucket = group.filter { scores[$0.id] == value }
+                    return bucket.count == group.count ? order(bucket, rest) : directEncounter(bucket, then: rest)
                 }
-                if a.sonnebornBerger != b.sonnebornBerger { return a.sonnebornBerger > b.sonnebornBerger }
-                if a.wins != b.wins { return a.wins > b.wins }
-                return a.player.name < b.player.name
             }
+
+            // art. 6.3 (suizo): si alguien queda solo arriba aunque se jueguen las partidas que faltan, va primero
+            if tournament.isSwiss,
+               let top = group.max(by: { scores[$0.id]! < scores[$1.id]! }),
+               group.filter({ $0.id != top.id }).allSatisfy({ other in
+                   scores[top.id]! > scores[other.id]! + Double(group.count - 1 - opponentsMet(other, in: group))
+               }) {
+                return [top] + directEncounter(group.filter { $0.id != top.id }, then: rest)
+            }
+            return order(group, rest)
+        }
+
+        func order(_ group: [Standing], _ criteria: [(Standing) -> Double]) -> [Standing] {
+            guard group.count > 1 else { return group }
+            guard let criterion = criteria.first else { return group.sorted { $0.player.name < $1.player.name } }
+            let values = Set(group.map(criterion)).sorted(by: >)
+            return values.flatMap { value in
+                order(group.filter { criterion($0) == value }, Array(criteria.dropFirst()))
+            }
+        }
+
+        let criteria: [(Standing) -> Double] = tournament.isSwiss
+            ? [{ $0.buchholz }, { $0.sonnebornBerger }, { Double($0.wins) }]
+            : [{ $0.koya }, { $0.sonnebornBerger }, { Double($0.wins) }]
+
+        return Set(standings.map(\.score)).sorted(by: >).flatMap { score in
+            directEncounter(standings.filter { $0.score == score }, then: criteria)
+        }
     }
 }
-

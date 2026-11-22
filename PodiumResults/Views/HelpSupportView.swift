@@ -11,7 +11,7 @@ struct HelpSupportView: View {
         ("Can I add a player after the tournament has started?",
          "Yes. Select Add Player in the Information tab. The player joins in the next round, and rounds already played are not changed. For each round missed, the player receives half a point or no points, depending on your Preferences. In a Swiss tournament, players can join until the last round is paired."),
         ("How are ties broken in the standings?",
-         "Players with the same score are ranked by direct encounter. In round robin, then Koya, Sonneborn-Berger and wins. In Swiss, then Buchholz, Sonneborn-Berger and wins."),
+         "Players with the same score are ranked with the FIDE tie-break rules (C.07). First the direct encounter, which is the result of the games between the tied players. In round robin, then Koya, Sonneborn-Berger and wins. In Swiss, then Buchholz, Sonneborn-Berger and wins."),
         ("How do I share a tournament online?",
          "Select Publish Online in the Information tab to save a copy that others can follow. The copy updates when results change. Select Remove from Online at any time to delete it."),
         ("How do I export the results?",
@@ -33,8 +33,8 @@ struct HelpSupportView: View {
                 }
             }
 
-            SettingsGroup(title: "Contact", footer: "Opens the project page on GitHub.") {
-                Link(destination: URL(string: "https://github.com/Elbaku16/Podium-Results/issues")!) {
+            SettingsGroup(title: "Contact") {
+                Link(destination: URL(string: "https://github.com/Elbaku16/Podium-Results/issues/new")!) {
                     HStack(spacing: 12) {
                         SettingsIcon(name: "exclamationmark.bubble.fill")
                         Text("Report a problem")

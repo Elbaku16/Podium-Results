@@ -364,6 +364,24 @@ final class LogicTests: XCTestCase {
         XCTAssertTrue(zip(s, s.dropFirst()).allSatisfy { $0.score >= $1.score })
         XCTAssertTrue(s.contains { $0.buchholz > 0 })
     }
+    func testDirectEncounterBeatsHigherBuchholz() {
+        let t = makeSwiss(5)
+        let p = t.players.sorted { $0.seed < $1.seed }
+        let (a, b, c, d, e) = (p[0], p[1], p[2], p[3], p[4])
+        func game(_ x: Player, _ y: Player, _ s1: Double, _ s2: Double) {
+            let m = Match(round: 1, player1: x, player2: y, score1: s1, score2: s2, isComplete: true, board: 1)
+            m.tournament = t
+            context.insert(m)
+        }
+        game(a, b, 1, 0); game(a, c, 0, 1); game(a, d, 1, 0)
+        game(b, e, 1, 0); game(b, d, 1, 0)
+        a.score = 2; b.score = 2; c.score = 1; d.score = 0; e.score = 3
+        let s = TiebreakCalculator.standings(for: t)
+        let first = s.first { $0.player.id == a.id }!, second = s.first { $0.player.id == b.id }!
+        XCTAssertGreaterThan(second.buchholz, first.buchholz, "b has the better buchholz")
+        XCTAssertLessThan(s.firstIndex { $0.player.id == a.id }!, s.firstIndex { $0.player.id == b.id }!, "a won the direct game")
+    }
+
     func testRoundRobinOddIsNotLiveJustBecauseOfByes() {
         let t = makeTournament(players: ["A", "B", "C"])
         vm().generateSchedule(for: t)

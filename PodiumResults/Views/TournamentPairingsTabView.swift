@@ -6,6 +6,8 @@ struct TournamentPairingsTabView: View {
     @Binding var selectedRound: Int?
     let currentRound: Int
     @Binding var matchBeingScored: Match?
+    let onPairNextRound: () -> Void
+    let onExport: () -> Void
 
     private var roundMatches: [Match] {
         tournament.matches
@@ -28,8 +30,47 @@ struct TournamentPairingsTabView: View {
                 roundPicker
                 columnHeader
                 matchList
+                roundAction
             }
         }
+    }
+
+    @ViewBuilder
+    private var roundAction: some View {
+        if let next = tournament.nextSwissRound, currentRound == tournament.latestRound {
+            actionButton("Pair Round \(next)", icon: "arrow.triangle.2.circlepath", action: onPairNextRound)
+        } else if tournament.status == .finished, currentRound == tournament.latestRound {
+            actionButton("Export Results (PDF)", icon: "square.and.arrow.up", action: onExport)
+        }
+    }
+
+    private func actionButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .foregroundStyle(.white)
+                .background(Color.podiumCopper)
+                .clipShape(Capsule())
+        }
+    }
+
+    private func playerName(_ player: Player) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(player.name)
+                .font(.subheadline)
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+            if currentRound > 1 {
+                let points = tournament.points(of: player, before: currentRound)
+                Text("\(points.scoreText) \(points > 0 && points <= 1 ? "pt" : "pts")")
+                    .font(.caption2)
+                    .foregroundStyle(Color.podiumMuted)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var roundPicker: some View {
@@ -91,19 +132,9 @@ struct TournamentPairingsTabView: View {
                         .foregroundStyle(Color.podiumMuted)
                         .frame(width: 44, alignment: .leading)
 
-                    Text(name1)
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.85)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if let player1 = match.player1 { playerName(player1) } else { Text(name1).frame(maxWidth: .infinity, alignment: .leading) }
 
-                    Text(player2.name)
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.85)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    playerName(player2)
 
                     Group {
                         if match.isComplete {

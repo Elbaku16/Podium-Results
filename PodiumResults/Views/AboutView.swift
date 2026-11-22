@@ -28,25 +28,9 @@ struct AboutView: View {
             SettingsGroup {
                 SettingsValueRow(icon: "person.fill", title: "Developer", value: "Lenin Cortez")
                 SettingsDivider()
-                SettingsValueRow(icon: "hammer.fill", title: "Built with", value: "SwiftUI \u{00B7} SwiftData \u{00B7} Firebase")
+                SettingsValueRow(icon: "hammer.fill", title: "Built with", value: "SwiftUI \u{00B7} SwiftData")
                 SettingsDivider()
-                SettingsValueRow(icon: "checkmark.seal.fill", title: "Tiebreaks", value: "FIDE rules")
-            }
-
-            SettingsGroup {
-                Link(destination: URL(string: "https://github.com/Elbaku16/Podium-Results")!) {
-                    HStack(spacing: 12) {
-                        SettingsIcon(name: "chevron.left.forwardslash.chevron.right")
-                        Text("Source code on GitHub")
-                            .font(.body)
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Image(systemName: "arrow.up.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.podiumMuted.opacity(0.6))
-                    }
-                    .padding(.vertical, 12)
-                }
+                SettingsValueRow(icon: "checkmark.seal.fill", title: "Tie-breaks", value: "FIDE C.07")
             }
 
             Text("\u{00A9} 2026 Lenin Cortez")

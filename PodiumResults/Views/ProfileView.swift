@@ -86,10 +86,10 @@ struct ProfileView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 30, height: 32)
-                Text("\(AppInfo.firstWord.uppercased())\n\(AppInfo.secondWord.uppercased())")
-                    .font(.caption.weight(.bold))
-                    .tracking(1.5)
-                    .foregroundStyle(Color.podiumBeige)
+                Image("BrandWordmark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 30)
             }
             Spacer()
             NavigationLink(value: ProfileDestination.preferences) {
@@ -125,24 +125,24 @@ struct ProfileView: View {
             statDivider
             statTile(value: distinctPlayerCount, label: "Players")
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 10)
         .profileCard()
     }
 
     private var statDivider: some View {
         Rectangle()
             .fill(Color.podiumCopper.opacity(0.25))
-            .frame(width: 1, height: 52)
+            .frame(width: 1, height: 32)
     }
 
     private func statTile(value: Int, label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Text("\(value)")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
             Text(label.uppercased())
-                .font(.caption2.weight(.semibold))
-                .tracking(0.8)
+                .font(.system(size: 9, weight: .semibold))
+                .tracking(0.6)
                 .foregroundStyle(Color.podiumMuted)
                 .multilineTextAlignment(.center)
         }

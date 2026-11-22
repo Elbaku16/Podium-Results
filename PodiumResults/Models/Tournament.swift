@@ -63,6 +63,15 @@ extension Tournament {
         return latestRound + 1
     }
 
+    // puntos que llevaba el jugador antes de empezar la ronda
+    func points(of player: Player, before round: Int) -> Double {
+        matches.filter { $0.round < round && $0.isComplete }.reduce(0) { total, match in
+            if match.player1?.id == player.id { return total + match.score1 }
+            if match.player2?.id == player.id { return total + match.score2 }
+            return total
+        }
+    }
+
     // fide: en suizo solo se puede entrar hasta la ronda 3
     var acceptsPlayers: Bool {
         status != .finished && (!isSwiss || matches.isEmpty || latestRound < min(3, totalRounds))

@@ -6,6 +6,18 @@ struct TournamentStandingsTabView: View {
     @Binding var selectedPlayer: Player?
 
     var body: some View {
+        VStack(spacing: 12) {
+            list
+            Text(isSwiss
+                 ? "Tie-breaks in order: Direct Encounter, Buchholz, Sonneborn-Berger, Wins."
+                 : "Tie-breaks in order: Direct Encounter, Koya, Sonneborn-Berger, Wins.")
+                .font(.caption2)
+                .foregroundStyle(Color.podiumMuted)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private var list: some View {
         VStack(spacing: 0) {
             ForEach(Array(standings.enumerated()), id: \.element.id) { index, standing in
                 Button {
