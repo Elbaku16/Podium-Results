@@ -19,89 +19,86 @@ struct WelcomeView: View {
     private var canSubmit: Bool { isEmailValid && isPasswordValid }
 
     var body: some View {
-        ZStack {
-            backdrop
+        ScrollView {
+            VStack(spacing: 18) {
+                Spacer(minLength: 8)
 
-            ScrollView {
-                VStack(spacing: 22) {
-                    Spacer(minLength: 40)
+                BrandLogo(width: 140)
 
-                    BrandLogo(width: 140)
-
-                    Text("More than tournaments. A global chess community.")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-
-                    Spacer(minLength: 16)
-
-                    VStack(spacing: 12) {
-                        socialButton(label: "Continue with Apple") {
-                            Image(systemName: "apple.logo")
-                        }
-                        socialButton(label: "Continue with Google") {
-                            Image("GoogleLogo")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 18, height: 18)
-                        }
-                    }
-
-                    HStack {
-                        Rectangle().fill(.white.opacity(0.15)).frame(height: 1)
-                        Text("or").font(.caption).foregroundStyle(.white.opacity(0.5))
-                        Rectangle().fill(.white.opacity(0.15)).frame(height: 1)
-                    }
-
-                    VStack(spacing: 12) {
-                        pillField(placeholder: "Email", text: $email, isValid: isEmailValid, keyboard: .emailAddress)
-                        passwordPillField()
-                    }
-
-                    Button {
-                        didAttemptSubmit = true
-                        guard canSubmit else { return }
-                        Task {
-                            if await auth.signIn(email: email, password: password) {
-                                isShowingApp = true
-                            } else {
-                                errorText = auth.errorMessage
-                            }
-                        }
-                    } label: {
-                        Text(auth.isLoading ? "Logging in..." : "Log In")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                    }
-                    .foregroundStyle(.white)
-                    .background(Color.podiumCopper)
-                    .clipShape(Capsule())
-                    .disabled(auth.isLoading)
-
-                    Button {
-                        isShowingApp = true
-                    } label: {
-                        Text("Skip")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-
-                    HStack(spacing: 4) {
-                        Text("Don't have an account?")
-                            .foregroundStyle(.white.opacity(0.6))
-                        Button("Sign Up") { isShowingSignUp = true }
-                            .foregroundStyle(Color.podiumCopper)
-                            .fontWeight(.semibold)
-                    }
+                Text("More than tournaments. A global chess community.")
                     .font(.subheadline)
-                    .padding(.bottom, 24)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+
+                Spacer(minLength: 4)
+
+                VStack(spacing: 12) {
+                    socialButton(label: "Continue with Apple") {
+                        Image(systemName: "apple.logo")
+                    }
+                    socialButton(label: "Continue with Google") {
+                        Image("GoogleLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 18, height: 18)
+                    }
                 }
-                .padding(.horizontal, 28)
+
+                HStack {
+                    Rectangle().fill(.white.opacity(0.15)).frame(height: 1)
+                    Text("or").font(.caption).foregroundStyle(.white.opacity(0.5))
+                    Rectangle().fill(.white.opacity(0.15)).frame(height: 1)
+                }
+
+                VStack(spacing: 12) {
+                    pillField(placeholder: "Email", text: $email, isValid: isEmailValid, keyboard: .emailAddress)
+                    passwordPillField()
+                }
+
+                Button {
+                    didAttemptSubmit = true
+                    guard canSubmit else { return }
+                    Task {
+                        if await auth.signIn(email: email, password: password) {
+                            isShowingApp = true
+                        } else {
+                            errorText = auth.errorMessage
+                        }
+                    }
+                } label: {
+                    Text(auth.isLoading ? "Logging in..." : "Log In")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+                .foregroundStyle(.white)
+                .background(Color.podiumCopper)
+                .clipShape(Capsule())
+                .disabled(auth.isLoading)
+
+                Button {
+                    isShowingApp = true
+                } label: {
+                    Text("Skip")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+
+                HStack(spacing: 4) {
+                    Text("Don't have an account?")
+                        .foregroundStyle(.white.opacity(0.6))
+                    Button("Sign Up") { isShowingSignUp = true }
+                        .foregroundStyle(Color.podiumCopper)
+                        .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .padding(.bottom, 12)
             }
-            .scrollBounceBehavior(.basedOnSize)
+            .padding(.horizontal, 28)
         }
+        .scrollBounceBehavior(.basedOnSize)
+        .background { backdrop }
         .fullScreenCover(isPresented: $isShowingApp) {
             MainTabView()
         }

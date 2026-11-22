@@ -94,13 +94,15 @@ struct TournamentPairingsTabView: View {
                     Text(name1)
                         .font(.subheadline)
                         .foregroundStyle(.white)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text(player2.name)
                         .font(.subheadline)
                         .foregroundStyle(.white)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Group {

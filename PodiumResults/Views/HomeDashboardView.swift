@@ -44,57 +44,60 @@ struct HomeDashboardView: View {
             ZStack {
                 Color.podiumCharcoal.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        header
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-                            .padding(.bottom, 16)
+                VStack(spacing: 0) {
+                    header
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                        .padding(.bottom, 16)
 
-                        if tournaments.isEmpty {
-                            HomeEmptyHeroView(onCreateTournament: { isShowingNewTournament = true })
-                        } else {
-                            if let featured {
-                                HomeFeaturedHeroView(tournament: featured)
-                            }
-
-                            VStack(alignment: .leading, spacing: 24) {
-                                if !recentActivity.isEmpty {
-                                    HomeRecentActivityView(items: recentActivity)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            if tournaments.isEmpty {
+                                HomeEmptyHeroView(onCreateTournament: { isShowingNewTournament = true })
+                            } else {
+                                if let featured {
+                                    HomeFeaturedHeroView(tournament: featured)
                                 }
 
-                                if !upcoming.isEmpty {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        SectionHeading(title: "Upcoming Tournaments")
-                                        VStack(spacing: 0) {
-                                            ForEach(Array(upcoming.enumerated()), id: \.element.id) { index, tournament in
-                                                NavigationLink(value: tournament) {
-                                                    TournamentRow(tournament: tournament)
-                                                }
-                                                .buttonStyle(.plain)
-                                                if index != upcoming.count - 1 {
-                                                    Divider().overlay(.white.opacity(0.07))
+                                VStack(alignment: .leading, spacing: 24) {
+                                    if !recentActivity.isEmpty {
+                                        HomeRecentActivityView(items: recentActivity)
+                                    }
+
+                                    if !upcoming.isEmpty {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            SectionHeading(title: "Upcoming Tournaments")
+                                            VStack(spacing: 0) {
+                                                ForEach(Array(upcoming.enumerated()), id: \.element.id) { index, tournament in
+                                                    NavigationLink(value: tournament) {
+                                                        TournamentRow(tournament: tournament)
+                                                    }
+                                                    .buttonStyle(.plain)
+                                                    if index != upcoming.count - 1 {
+                                                        Divider().overlay(.white.opacity(0.07))
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
+                                .padding(.horizontal, 20)
+                                .padding(.top, 22)
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.top, 22)
                         }
+                        .padding(.bottom, 24)
                     }
-                    .padding(.bottom, 24)
                 }
                 .navigationDestination(for: Tournament.self) { tournament in
                     TournamentDetailView(tournament: tournament)
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $isShowingNewTournament) {
+                NewTournamentView()
+            }
         }
         .tint(.podiumCopper)
-        .sheet(isPresented: $isShowingNewTournament) {
-            NewTournamentView()
-        }
     }
 
     private var header: some View {
